@@ -28,8 +28,8 @@ steps:
       - --allow-unauthenticated
       - --port=3000
       - --memory=512Mi
-      - --set-env-vars=NODE_ENV=production,PORT=3000
-      - --set-secrets=WHATSAPP_VERIFY_TOKEN=WHATSAPP_VERIFY_TOKEN:latest,WHATSAPP_ACCESS_TOKEN=WHATSAPP_ACCESS_TOKEN:latest,WHATSAPP_PHONE_NUMBER_ID=WHATSAPP_PHONE_NUMBER_ID:latest,WHATSAPP_APP_SECRET=WHATSAPP_APP_SECRET:latest,AI_AGENT_SERVICE_URL=AI_AGENT_SERVICE_URL:latest
+      - --set-env-vars=NODE_ENV=production,AI_AGENT_SERVICE_URL=https://participa-ai-agent-REEMPLAZAR.a.run.app
+      - --set-secrets=WHATSAPP_VERIFY_TOKEN=WHATSAPP_VERIFY_TOKEN:latest,WHATSAPP_ACCESS_TOKEN=WHATSAPP_ACCESS_TOKEN:latest,WHATSAPP_PHONE_NUMBER_ID=WHATSAPP_PHONE_NUMBER_ID:latest,WHATSAPP_APP_SECRET=WHATSAPP_APP_SECRET:latest
     waitFor: [push]
 
 images:
