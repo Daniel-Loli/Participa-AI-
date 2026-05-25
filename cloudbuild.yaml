@@ -1,0 +1,81 @@
+steps:
+  # ── Build y push: AI Agent ────────────────────────────────────────────────
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - build
+      - -t
+      - us-central1-docker.pkg.dev/$PROJECT_ID/participa-ai/ai-agent:$COMMIT_SHA
+      - -t
+      - us-central1-docker.pkg.dev/$PROJECT_ID/participa-ai/ai-agent:latest
+      - ./services/ai-agent
+    id: build-ai-agent
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - push
+      - --all-tags
+      - us-central1-docker.pkg.dev/$PROJECT_ID/participa-ai/ai-agent
+    id: push-ai-agent
+    waitFor: [build-ai-agent]
+
+  # ── Build y push: WhatsApp ─────────────────────────────────────────────────
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - build
+      - -t
+      - us-central1-docker.pkg.dev/$PROJECT_ID/participa-ai/whatsapp:$COMMIT_SHA
+      - -t
+      - us-central1-docker.pkg.dev/$PROJECT_ID/participa-ai/whatsapp:latest
+      - ./services/whatsapp
+    id: build-whatsapp
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - push
+      - --all-tags
+      - us-central1-docker.pkg.dev/$PROJECT_ID/participa-ai/whatsapp
+    id: push-whatsapp
+    waitFor: [build-whatsapp]
+
+  # ── Deploy: AI Agent ───────────────────────────────────────────────────────
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - run
+      - deploy
+      - participa-ai-agent
+      - --image=us-central1-docker.pkg.dev/$PROJECT_ID/participa-ai/ai-agent:$COMMIT_SHA
+      - --region=us-central1
+      - --platform=managed
+      - --allow-unauthenticated
+      - --port=8000
+      - --memory=1Gi
+      - --set-env-vars=OPENAI_MODEL=gpt-4o-mini,OPENAI_EMBEDDING_MODEL=text-embedding-3-small,OPENAI_WHISPER_MODEL=whisper-1,OPENAI_TTS_MODEL=tts-1,OPENAI_TTS_VOICE=alloy,QDRANT_COLLECTION_LEGAL=legal,QDRANT_COLLECTION_ODS=ods,QDRANT_COLLECTION_PROCEDIMIENTOS=procedimientos,QDRANT_COLLECTION_CASOS=casos_exito,LANGCHAIN_TRACING_V2=true,LANGCHAIN_PROJECT=participa-ai
+      - --set-secrets=OPENAI_API_KEY=OPENAI_API_KEY:latest,QDRANT_URL=QDRANT_URL:latest,QDRANT_API_KEY=QDRANT_API_KEY:latest,REDIS_URL=REDIS_URL:latest,REDIS_PASSWORD=REDIS_PASSWORD:latest,LANGCHAIN_API_KEY=LANGCHAIN_API_KEY:latest
+    id: deploy-ai-agent
+    waitFor: [push-ai-agent]
+
+  # ── Deploy: WhatsApp ───────────────────────────────────────────────────────
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - run
+      - deploy
+      - participa-whatsapp
+      - --image=us-central1-docker.pkg.dev/$PROJECT_ID/participa-ai/whatsapp:$COMMIT_SHA
+      - --region=us-central1
+      - --platform=managed
+      - --allow-unauthenticated
+      - --port=3000
+      - --memory=512Mi
+      - --set-env-vars=NODE_ENV=production,PORT=3000
+      - --set-secrets=WHATSAPP_VERIFY_TOKEN=WHATSAPP_VERIFY_TOKEN:latest,WHATSAPP_ACCESS_TOKEN=WHATSAPP_ACCESS_TOKEN:latest,WHATSAPP_PHONE_NUMBER_ID=WHATSAPP_PHONE_NUMBER_ID:latest,WHATSAPP_APP_SECRET=WHATSAPP_APP_SECRET:latest,AI_AGENT_SERVICE_URL=AI_AGENT_SERVICE_URL:latest
+    id: deploy-whatsapp
+    waitFor: [push-whatsapp, deploy-ai-agent]
+
+images:
+  - us-central1-docker.pkg.dev/$PROJECT_ID/participa-ai/ai-agent:$COMMIT_SHA
+  - us-central1-docker.pkg.dev/$PROJECT_ID/participa-ai/ai-agent:latest
+  - us-central1-docker.pkg.dev/$PROJECT_ID/participa-ai/whatsapp:$COMMIT_SHA
+  - us-central1-docker.pkg.dev/$PROJECT_ID/participa-ai/whatsapp:latest
+
+options:
+  logging: CLOUD_LOGGING_ONLY

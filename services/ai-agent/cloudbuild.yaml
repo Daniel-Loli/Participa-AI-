@@ -1,0 +1,40 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - build
+      - -t
+      - us-central1-docker.pkg.dev/$PROJECT_ID/participa-ai/ai-agent:$COMMIT_SHA
+      - -t
+      - us-central1-docker.pkg.dev/$PROJECT_ID/participa-ai/ai-agent:latest
+      - .
+    id: build
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - push
+      - --all-tags
+      - us-central1-docker.pkg.dev/$PROJECT_ID/participa-ai/ai-agent
+    id: push
+    waitFor: [build]
+
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - run
+      - deploy
+      - participa-ai-agent
+      - --image=us-central1-docker.pkg.dev/$PROJECT_ID/participa-ai/ai-agent:$COMMIT_SHA
+      - --region=us-central1
+      - --platform=managed
+      - --allow-unauthenticated
+      - --port=8000
+      - --memory=1Gi
+      - --set-env-vars=OPENAI_MODEL=gpt-4o-mini,OPENAI_EMBEDDING_MODEL=text-embedding-3-small,OPENAI_WHISPER_MODEL=whisper-1,OPENAI_TTS_MODEL=tts-1,OPENAI_TTS_VOICE=alloy,QDRANT_COLLECTION_LEGAL=legal,QDRANT_COLLECTION_ODS=ods,QDRANT_COLLECTION_PROCEDIMIENTOS=procedimientos,QDRANT_COLLECTION_CASOS=casos_exito,LANGCHAIN_TRACING_V2=true,LANGCHAIN_PROJECT=participa-ai
+      - --set-secrets=OPENAI_API_KEY=OPENAI_API_KEY:latest,QDRANT_URL=QDRANT_URL:latest,QDRANT_API_KEY=QDRANT_API_KEY:latest,REDIS_URL=REDIS_URL:latest,REDIS_PASSWORD=REDIS_PASSWORD:latest,LANGCHAIN_API_KEY=LANGCHAIN_API_KEY:latest
+    waitFor: [push]
+
+images:
+  - us-central1-docker.pkg.dev/$PROJECT_ID/participa-ai/ai-agent:$COMMIT_SHA
+  - us-central1-docker.pkg.dev/$PROJECT_ID/participa-ai/ai-agent:latest
+
+options:
+  logging: CLOUD_LOGGING_ONLY

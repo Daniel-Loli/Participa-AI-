@@ -1,0 +1,40 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - build
+      - -t
+      - us-central1-docker.pkg.dev/$PROJECT_ID/participa-ai/whatsapp:$COMMIT_SHA
+      - -t
+      - us-central1-docker.pkg.dev/$PROJECT_ID/participa-ai/whatsapp:latest
+      - .
+    id: build
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - push
+      - --all-tags
+      - us-central1-docker.pkg.dev/$PROJECT_ID/participa-ai/whatsapp
+    id: push
+    waitFor: [build]
+
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - run
+      - deploy
+      - participa-whatsapp
+      - --image=us-central1-docker.pkg.dev/$PROJECT_ID/participa-ai/whatsapp:$COMMIT_SHA
+      - --region=us-central1
+      - --platform=managed
+      - --allow-unauthenticated
+      - --port=3000
+      - --memory=512Mi
+      - --set-env-vars=NODE_ENV=production,PORT=3000
+      - --set-secrets=WHATSAPP_VERIFY_TOKEN=WHATSAPP_VERIFY_TOKEN:latest,WHATSAPP_ACCESS_TOKEN=WHATSAPP_ACCESS_TOKEN:latest,WHATSAPP_PHONE_NUMBER_ID=WHATSAPP_PHONE_NUMBER_ID:latest,WHATSAPP_APP_SECRET=WHATSAPP_APP_SECRET:latest,AI_AGENT_SERVICE_URL=AI_AGENT_SERVICE_URL:latest
+    waitFor: [push]
+
+images:
+  - us-central1-docker.pkg.dev/$PROJECT_ID/participa-ai/whatsapp:$COMMIT_SHA
+  - us-central1-docker.pkg.dev/$PROJECT_ID/participa-ai/whatsapp:latest
+
+options:
+  logging: CLOUD_LOGGING_ONLY
