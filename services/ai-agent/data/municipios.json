@@ -1,0 +1,107 @@
+[
+  {
+    "distrito": "Lima",
+    "funcionario": "Rafael López Aliaga",
+    "cargo": "Alcalde",
+    "municipio": "Municipalidad Metropolitana de Lima",
+    "mesa_partes": "Jr. de la Unión 300, Cercado de Lima"
+  },
+  {
+    "distrito": "Miraflores",
+    "funcionario": "Carlos Canales",
+    "cargo": "Alcalde",
+    "municipio": "Municipalidad de Miraflores",
+    "mesa_partes": "Av. Larco 400, Miraflores"
+  },
+  {
+    "distrito": "San Isidro",
+    "funcionario": "Manuel Velarde",
+    "cargo": "Alcalde",
+    "municipio": "Municipalidad de San Isidro",
+    "mesa_partes": "Av. Miguel Dasso 250, San Isidro"
+  },
+  {
+    "distrito": "Santiago de Surco",
+    "funcionario": "Carlos Bruce",
+    "cargo": "Alcalde",
+    "municipio": "Municipalidad de Santiago de Surco",
+    "mesa_partes": "Av. Ayacucho 824, Surco"
+  },
+  {
+    "distrito": "San Borja",
+    "funcionario": "Marco Álvarez",
+    "cargo": "Alcalde",
+    "municipio": "Municipalidad de San Borja",
+    "mesa_partes": "Av. De La Floresta 495, San Borja"
+  },
+  {
+    "distrito": "La Molina",
+    "funcionario": "Álvaro Paz de la Barra",
+    "cargo": "Alcalde",
+    "municipio": "Municipalidad de La Molina",
+    "mesa_partes": "Av. La Fontana 1010, La Molina"
+  },
+  {
+    "distrito": "Barranco",
+    "funcionario": "Renzo Reggiardo",
+    "cargo": "Alcalde",
+    "municipio": "Municipalidad de Barranco",
+    "mesa_partes": "Jr. Junín 245, Barranco"
+  },
+  {
+    "distrito": "Chorrillos",
+    "funcionario": "Augusto Miyashiro",
+    "cargo": "Alcalde",
+    "municipio": "Municipalidad de Chorrillos",
+    "mesa_partes": "Av. Guardia Civil 1025, Chorrillos"
+  },
+  {
+    "distrito": "San Juan de Lurigancho",
+    "funcionario": "Jesús Maldonado",
+    "cargo": "Alcalde",
+    "municipio": "Municipalidad de San Juan de Lurigancho",
+    "mesa_partes": "Av. Gran Chimú 400, San Juan de Lurigancho"
+  },
+  {
+    "distrito": "Villa El Salvador",
+    "funcionario": "Kevin Quevedo",
+    "cargo": "Alcalde",
+    "municipio": "Municipalidad de Villa El Salvador",
+    "mesa_partes": "Av. Revolución s/n, Villa El Salvador"
+  },
+  {
+    "distrito": "Los Olivos",
+    "funcionario": "Felipe Castillo",
+    "cargo": "Alcalde",
+    "municipio": "Municipalidad de Los Olivos",
+    "mesa_partes": "Av. Carlos Izaguirre 176, Los Olivos"
+  },
+  {
+    "distrito": "Callao",
+    "funcionario": "John Reynaga",
+    "cargo": "Alcalde",
+    "municipio": "Municipalidad del Callao",
+    "mesa_partes": "Jr. Constitución 104, Callao"
+  },
+  {
+    "distrito": "Ate",
+    "funcionario": "Oscar Benavides",
+    "cargo": "Alcalde",
+    "municipio": "Municipalidad de Ate",
+    "mesa_partes": "Av. Nicolás Ayllón 580, Ate"
+  },
+  {
+    "distrito": "San Martín de Porres",
+    "funcionario": "Julio Buitrón",
+    "cargo": "Alcalde",
+    "municipio": "Municipalidad de San Martín de Porres",
+    "mesa_partes": "Av. Tomás Valle s/n, SMP"
+  },
+  {
+    "distrito": "Comas",
+    "funcionario": "Ulises Villegas",
+    "cargo": "Alcalde",
+    "municipio": "Municipalidad de Comas",
+    "mesa_partes": "Av. Túpac Amaru 100, Comas"
+  }
+]

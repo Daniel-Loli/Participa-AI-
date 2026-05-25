@@ -1,0 +1,16 @@
+from __future__ import annotations
+
+from typing import Annotated, TypedDict
+
+from langgraph.graph.message import add_messages
+
+
+class AgentState(TypedDict):
+    session_id: str
+    user_message: str
+    intent: str | None                          # valor de AgentIntent
+    user_profile: dict                          # UserProfile serializado como dict
+    rag_context: list[str]                      # chunks recuperados de Qdrant
+    tool_data: dict                             # datos de JSONs locales (calendar, directorio…)
+    response: str                               # respuesta generada por el nodo activo
+    conversation_history: Annotated[list, add_messages]  # historial acumulativo

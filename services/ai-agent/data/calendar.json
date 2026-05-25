@@ -1,0 +1,92 @@
+[
+  {
+    "fecha": "2026-06-05",
+    "tipo": "Audiencia Pública",
+    "titulo": "Audiencia de Presupuesto Participativo 2027",
+    "distrito": "Lima",
+    "descripcion": "Priorización de proyectos PP 2027 para el Cercado de Lima.",
+    "requisitos": "Registro previo en la Municipalidad Metropolitana",
+    "enlace": "https://www.munlima.gob.pe"
+  },
+  {
+    "fecha": "2026-06-12",
+    "tipo": "Sesión de Concejo",
+    "titulo": "Sesión Ordinaria del Concejo Metropolitano de Lima",
+    "distrito": "Lima",
+    "descripcion": "Sesión pública del concejo. Ciudadanos pueden solicitar el uso de la palabra.",
+    "requisitos": "Solicitud escrita con 48 horas de anticipación",
+    "enlace": "https://www.munlima.gob.pe"
+  },
+  {
+    "fecha": "2026-06-20",
+    "tipo": "Presupuesto Participativo",
+    "titulo": "Taller de Formulación de Ideas PP 2027 - Miraflores",
+    "distrito": "Miraflores",
+    "descripcion": "Taller para formular y presentar propuestas al PP 2027.",
+    "requisitos": "Ser vecino empadronado de Miraflores",
+    "enlace": "https://www.miraflores.gob.pe"
+  },
+  {
+    "fecha": "2026-07-03",
+    "tipo": "Audiencia Pública",
+    "titulo": "Audiencia de Rendición de Cuentas - SJL",
+    "distrito": "San Juan de Lurigancho",
+    "descripcion": "El alcalde rinde cuentas sobre la ejecución presupuestal semestral.",
+    "requisitos": "Ninguno, entrada libre",
+    "enlace": "https://www.munisjl.gob.pe"
+  },
+  {
+    "fecha": "2026-07-15",
+    "tipo": "Presupuesto Participativo",
+    "titulo": "Inscripción de Agentes Participantes PP 2027 - Lima",
+    "distrito": "Lima",
+    "descripcion": "Plazo de inscripción como agente participante para el PP 2027.",
+    "requisitos": "DNI y acreditar residencia o trabajo en el distrito",
+    "enlace": "https://www.munlima.gob.pe/pp"
+  },
+  {
+    "fecha": "2026-07-20",
+    "tipo": "Taller Ciudadano",
+    "titulo": "Taller: Cómo presentar una propuesta al PP",
+    "distrito": "Villa El Salvador",
+    "descripcion": "Capacitación gratuita sobre el proceso de Presupuesto Participativo.",
+    "requisitos": "Ninguno, inscripción en la municipalidad",
+    "enlace": "https://www.mves.gob.pe"
+  },
+  {
+    "fecha": "2026-07-28",
+    "tipo": "Sesión de Concejo",
+    "titulo": "Sesión Solemne por Fiestas Patrias - Los Olivos",
+    "distrito": "Los Olivos",
+    "descripcion": "Sesión especial con participación ciudadana y reconocimientos.",
+    "requisitos": "Ninguno",
+    "enlace": "https://www.munilosolivos.gob.pe"
+  },
+  {
+    "fecha": "2026-08-01",
+    "tipo": "Presupuesto Participativo",
+    "titulo": "Priorización de Proyectos PP 2027 - Los Olivos",
+    "distrito": "Los Olivos",
+    "descripcion": "Votación y priorización de proyectos por los agentes participantes.",
+    "requisitos": "Estar registrado como agente participante",
+    "enlace": "https://www.munilosolivos.gob.pe"
+  },
+  {
+    "fecha": "2026-08-15",
+    "tipo": "Sesión de Concejo",
+    "titulo": "Sesión de Aprobación PP Metropolitano 2027",
+    "distrito": "Lima",
+    "descripcion": "Sesión especial del Concejo Metropolitano para aprobación formal del PP.",
+    "requisitos": "Ninguno, sesión pública",
+    "enlace": "https://www.munlima.gob.pe"
+  },
+  {
+    "fecha": "2026-09-10",
+    "tipo": "Audiencia Pública",
+    "titulo": "Audiencia de Consulta Vecinal - San Borja",
+    "distrito": "San Borja",
+    "descripcion": "Consulta a vecinos sobre proyectos de mejora urbana.",
+    "requisitos": "Ser residente de San Borja",
+    "enlace": "https://www.munisanborja.gob.pe"
+  }
+]

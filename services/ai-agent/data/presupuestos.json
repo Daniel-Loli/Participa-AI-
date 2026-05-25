@@ -1,0 +1,132 @@
+[
+  {
+    "año": 2024,
+    "distrito": "Lima",
+    "monto_total_sol": 45000000,
+    "monto_aprobado_sol": 38500000,
+    "proyectos_aprobados": 12,
+    "proyectos_priorizados": 18,
+    "fecha_convocatoria": "2024-03-01",
+    "fecha_priorizacion": "2024-05-15",
+    "fecha_aprobacion": "2024-06-30",
+    "proyectos_destacados": [
+      "Mejoramiento vial Av. Abancay",
+      "Centro de emprendimiento juvenil Cercado",
+      "Parque inclusivo El Agustino"
+    ],
+    "enlace": "https://www.munlima.gob.pe/presupuesto-participativo"
+  },
+  {
+    "año": 2024,
+    "distrito": "San Juan de Lurigancho",
+    "monto_total_sol": 12000000,
+    "monto_aprobado_sol": 9800000,
+    "proyectos_aprobados": 8,
+    "proyectos_priorizados": 14,
+    "fecha_convocatoria": "2024-02-15",
+    "fecha_priorizacion": "2024-04-20",
+    "fecha_aprobacion": "2024-06-01",
+    "proyectos_destacados": [
+      "Parque inclusivo Huiracocha",
+      "Posta médica Huáscar",
+      "Losas deportivas zona 5"
+    ],
+    "enlace": "https://www.munisjl.gob.pe/pp"
+  },
+  {
+    "año": 2024,
+    "distrito": "Villa El Salvador",
+    "monto_total_sol": 8500000,
+    "monto_aprobado_sol": 7200000,
+    "proyectos_aprobados": 6,
+    "proyectos_priorizados": 10,
+    "fecha_convocatoria": "2024-03-10",
+    "fecha_priorizacion": "2024-05-05",
+    "fecha_aprobacion": "2024-06-15",
+    "proyectos_destacados": [
+      "Red de bibliotecas comunitarias",
+      "Mejoramiento pistas sector 3",
+      "Centro cultural juvenil"
+    ],
+    "enlace": "https://www.mves.gob.pe/pp"
+  },
+  {
+    "año": 2024,
+    "distrito": "Los Olivos",
+    "monto_total_sol": 9200000,
+    "monto_aprobado_sol": 7800000,
+    "proyectos_aprobados": 7,
+    "proyectos_priorizados": 12,
+    "fecha_convocatoria": "2024-02-20",
+    "fecha_priorizacion": "2024-04-25",
+    "fecha_aprobacion": "2024-06-10",
+    "proyectos_destacados": [
+      "Centro de emprendimiento juvenil",
+      "Pistas y veredas Pro",
+      "Parque lineal Universitaria"
+    ],
+    "enlace": "https://www.munilosolivos.gob.pe/pp"
+  },
+  {
+    "año": 2024,
+    "distrito": "Comas",
+    "monto_total_sol": 7800000,
+    "monto_aprobado_sol": 6500000,
+    "proyectos_aprobados": 5,
+    "proyectos_priorizados": 9,
+    "fecha_convocatoria": "2024-03-05",
+    "fecha_priorizacion": "2024-05-10",
+    "fecha_aprobacion": "2024-06-20",
+    "proyectos_destacados": [
+      "Polideportivo zona norte",
+      "Mercado modelo Comas",
+      "Programa jóvenes emprendedores"
+    ],
+    "enlace": "https://www.municomas.gob.pe/pp"
+  },
+  {
+    "año": 2024,
+    "distrito": "Miraflores",
+    "monto_total_sol": 6500000,
+    "monto_aprobado_sol": 5900000,
+    "proyectos_aprobados": 5,
+    "proyectos_priorizados": 8,
+    "fecha_convocatoria": "2024-02-28",
+    "fecha_priorizacion": "2024-04-30",
+    "fecha_aprobacion": "2024-06-05",
+    "proyectos_destacados": [
+      "Puntos de acopio de reciclaje",
+      "Ciclovía Malecón",
+      "Modernización alumbrado público"
+    ],
+    "enlace": "https://www.miraflores.gob.pe/pp"
+  },
+  {
+    "año": 2025,
+    "distrito": "Lima",
+    "monto_total_sol": 48000000,
+    "monto_aprobado_sol": null,
+    "proyectos_aprobados": null,
+    "proyectos_priorizados": null,
+    "fecha_convocatoria": "2025-03-01",
+    "fecha_priorizacion": "2025-05-20",
+    "fecha_aprobacion": null,
+    "proyectos_destacados": [],
+    "estado": "En proceso de priorización",
+    "enlace": "https://www.munlima.gob.pe/presupuesto-participativo"
+  },
+  {
+    "año": 2025,
+    "distrito": "San Juan de Lurigancho",
+    "monto_total_sol": 13500000,
+    "monto_aprobado_sol": null,
+    "proyectos_aprobados": null,
+    "proyectos_priorizados": null,
+    "fecha_convocatoria": "2025-02-15",
+    "fecha_priorizacion": "2025-04-25",
+    "fecha_aprobacion": null,
+    "proyectos_destacados": [],
+    "estado": "Convocatoria abierta — inscripción de agentes participantes hasta el 30/03/2025",
+    "enlace": "https://www.munisjl.gob.pe/pp"
+  }
+]
