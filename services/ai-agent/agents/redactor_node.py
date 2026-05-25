@@ -6,6 +6,7 @@ from pathlib import Path
 
 from langchain_core.messages import AIMessage
 
+from agents.pdf_generator import letter_to_base64
 from agents.state import AgentState
 from agents.wa_format import WA_RULES
 from src.domain.ports.i_llm_client import ILlmClient
@@ -73,10 +74,23 @@ def make_redactor_node(llm_client: ILlmClient, data_dir=None):
             wa_rules=WA_RULES,
         )
         response = await llm_client.generate_with_history(system_prompt, state["conversation_history"])
+
+        profile = state.get("user_profile") or {}
+        pdf_b64 = letter_to_base64(
+            response,
+            doc_type,
+            profile.get("name", "Ciudadano"),
+            profile.get("district", "Lima"),
+        )
+        safe_district = (profile.get("district") or "Lima").lower().replace(" ", "_")
+        pdf_filename = f"{doc_type}_{safe_district}_{date.today().strftime('%Y%m%d')}.pdf"
+
         return {
             "response": response,
             "tool_data": {"municipio": municipio, "tipo_documento": doc_type},
             "conversation_history": [AIMessage(content=response)],
+            "pdf_base64": pdf_b64,
+            "pdf_filename": pdf_filename,
         }
 
     return redactor

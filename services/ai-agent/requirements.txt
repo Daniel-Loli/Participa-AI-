@@ -23,6 +23,9 @@ redis[asyncio]==5.2.*
 # Logging
 structlog==24.*
 
+# PDF generation
+reportlab==4.*
+
 # Dev / Config
 python-dotenv==1.0.*
 

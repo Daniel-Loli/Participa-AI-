@@ -18,7 +18,9 @@ export interface AudioAgentPayload {
 export interface AgentResponse {
   response_text?: string;
   response_audio_base64?: string;
-  response_type: 'text' | 'audio';
+  response_pdf_base64?: string;
+  response_pdf_filename?: string;
+  response_type: 'text' | 'audio' | 'document';
 }
 
 export interface IAiAgentClient {

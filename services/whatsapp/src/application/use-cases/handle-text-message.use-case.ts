@@ -25,7 +25,17 @@ export class HandleTextMessageUseCase {
         timestamp: message.timestamp,
       });
 
-      if (response.response_type === 'audio' && response.response_audio_base64) {
+      if (response.response_type === 'document' && response.response_pdf_base64) {
+        if (response.response_text) {
+          await this.sender.sendText(message.from, response.response_text);
+        }
+        await this.sender.sendDocument(
+          message.from,
+          response.response_pdf_base64,
+          response.response_pdf_filename ?? 'carta_ciudadana.pdf',
+          'Tu documento listo para imprimir 📄',
+        );
+      } else if (response.response_type === 'audio' && response.response_audio_base64) {
         await this.sender.sendAudio(message.from, response.response_audio_base64, 'audio/ogg');
       } else {
         await this.sender.sendText(message.from, response.response_text!);

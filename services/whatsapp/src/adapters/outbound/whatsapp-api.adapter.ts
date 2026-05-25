@@ -85,6 +85,34 @@ export class WhatsAppApiAdapter implements IMessageSender, IMediaDownloader {
     }
   }
 
+  async sendDocument(to: string, pdfBase64: string, filename: string, caption: string): Promise<void> {
+    try {
+      const buffer = Buffer.from(pdfBase64, 'base64');
+      const form = new FormData();
+      form.append('messaging_product', 'whatsapp');
+      form.append('file', new Blob([buffer], { type: 'application/pdf' }), filename);
+
+      const { data: uploaded } = await axios.post<{ id: string }>(
+        `${META_BASE_URL}/${this.phoneNumberId}/media`,
+        form,
+        { headers: this.authHeaders },
+      );
+
+      await axios.post(
+        `${META_BASE_URL}/${this.phoneNumberId}/messages`,
+        {
+          messaging_product: 'whatsapp',
+          to,
+          type: 'document',
+          document: { id: uploaded.id, filename, caption },
+        },
+        { headers: this.authHeaders },
+      );
+    } catch (error) {
+      throw this.wrapError(error, 'sendDocument');
+    }
+  }
+
   private wrapError(error: unknown, operation: string): Error {
     if (axios.isAxiosError(error) && error.response) {
       const status = error.response.status;

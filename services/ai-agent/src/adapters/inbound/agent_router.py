@@ -41,6 +41,8 @@ class AgentResponseDTO(BaseModel):
     response_type: str
     response_text: str | None = None
     response_audio_base64: str | None = None
+    response_pdf_base64: str | None = None
+    response_pdf_filename: str | None = None
 
 
 def get_process_message_use_case() -> ProcessMessageUseCase:
@@ -78,6 +80,8 @@ async def process_message(
         response_type=agent_response.response_type,
         response_text=agent_response.response_text,
         response_audio_base64=agent_response.response_audio_base64,
+        response_pdf_base64=agent_response.response_pdf_base64,
+        response_pdf_filename=agent_response.response_pdf_filename,
     )
 
 

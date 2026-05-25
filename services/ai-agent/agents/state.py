@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Annotated, TypedDict
+from typing import Annotated, NotRequired, TypedDict
 
 from langgraph.graph.message import add_messages
 
@@ -14,3 +14,5 @@ class AgentState(TypedDict):
     tool_data: dict                             # datos de JSONs locales (calendar, directorio…)
     response: str                               # respuesta generada por el nodo activo
     conversation_history: Annotated[list, add_messages]  # historial acumulativo
+    pdf_base64: NotRequired[str | None]         # PDF generado por redactor_node (base64)
+    pdf_filename: NotRequired[str | None]       # nombre del archivo PDF

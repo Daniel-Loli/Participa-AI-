@@ -58,7 +58,9 @@ class ProcessMessageUseCase:
         await self._save_profile(message.session_id, final_state.get("user_profile", {}))
 
         response_text = wa_clean(final_state.get("response", ""))
-        return await self._build_response(message, response_text)
+        pdf_base64 = final_state.get("pdf_base64")
+        pdf_filename = final_state.get("pdf_filename")
+        return await self._build_response(message, response_text, pdf_base64, pdf_filename)
 
     async def _transcribe_if_audio(self, message: Message) -> str:
         if message.is_text():
@@ -96,7 +98,20 @@ class ProcessMessageUseCase:
         except Exception as exc:
             logger.warning("Error guardando perfil para sesión '%s': %s", session_id, exc)
 
-    async def _build_response(self, message: Message, response_text: str) -> AgentResponse:
+    async def _build_response(
+        self,
+        message: Message,
+        response_text: str,
+        pdf_base64: str | None = None,
+        pdf_filename: str | None = None,
+    ) -> AgentResponse:
+        if pdf_base64:
+            return AgentResponse(
+                response_type="document",
+                response_text=response_text,
+                response_pdf_base64=pdf_base64,
+                response_pdf_filename=pdf_filename,
+            )
         if message.is_text():
             return AgentResponse(response_type="text", response_text=response_text)
         try:
