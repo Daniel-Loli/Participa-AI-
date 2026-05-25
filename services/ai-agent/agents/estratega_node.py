@@ -7,18 +7,20 @@ from pathlib import Path
 from langchain_core.messages import AIMessage
 
 from agents.state import AgentState
+from agents.wa_format import WA_RULES
 from src.domain.ports.i_llm_client import ILlmClient
 from src.domain.ports.i_rag_client import IRagClient
 from src.domain.value_objects.rag_collection import RagCollection
 
 _DEFAULT_DATA_DIR = Path(__file__).parent.parent / "data"
 
-_SYSTEM_PROMPT = """Eres un estratega de incidencia ciudadana para jóvenes peruanos.
-Genera una ruta de acción en pasos numerados (máximo 5 pasos) para que el usuario logre su objetivo.
-Sé concreto, práctico y usa lenguaje accesible para jóvenes de 15-29 años.
+_SYSTEM_PROMPT = """Eres el estratega de Participa AI 🗺️
+Das rutas de acción concretas para que jóvenes peruanos logren cambios reales en su comunidad.
+Máximo 4 pasos. Cada paso: una sola acción clara y alcanzable.
 {profile_context}
 {calendar_context}
-{rag_context}"""
+{rag_context}
+{wa_rules}"""
 
 
 def _load_calendar(data_dir: Path, district: str | None = None) -> list[dict]:
@@ -58,12 +60,13 @@ def make_estratega_node(llm_client: ILlmClient, rag_client: IRagClient, data_dir
 
         rag_ctx = ""
         if docs:
-            rag_ctx = "Procedimientos relevantes:\n" + "\n\n".join(doc.content for doc in docs)
+            rag_ctx = "Procedimientos:\n" + "\n\n".join(doc.content for doc in docs)
 
         system_prompt = _SYSTEM_PROMPT.format(
             profile_context=profile_ctx,
             calendar_context=calendar_ctx,
             rag_context=rag_ctx,
+            wa_rules=WA_RULES,
         )
         response = await llm_client.generate_with_history(system_prompt, state["conversation_history"])
         return {

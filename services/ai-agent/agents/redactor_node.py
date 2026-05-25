@@ -7,6 +7,7 @@ from pathlib import Path
 from langchain_core.messages import AIMessage
 
 from agents.state import AgentState
+from agents.wa_format import WA_RULES
 from src.domain.ports.i_llm_client import ILlmClient
 
 _DEFAULT_DATA_DIR = Path(__file__).parent.parent / "data"
@@ -18,13 +19,17 @@ _DOC_KEYWORDS: dict[str, list[str]] = {
     "inscripcion": ["inscripción", "inscripcion", "mesa"],
 }
 
-_SYSTEM_PROMPT = """Genera {tipo_documento} formal en español peruano.
-Datos del remitente: {nombre}, vecino/a de {distrito}.
-Destinatario: {funcionario} - {cargo} - {municipio}
+_SYSTEM_PROMPT = """Eres el redactor de Participa AI ✍️
+Genera {tipo_documento} formal y efectiva en español peruano.
+Remitente: {nombre}, vecino/a de {distrito}.
+Destinatario: {funcionario} ({cargo}) — {municipio}
 Mesa de partes: {mesa_partes}
 Fecha: {fecha}
 Problemática: {issue}
-Formato: encabezado formal, cuerpo con exposición del problema y petición concreta, cierre, firma."""
+
+Estructura: encabezado formal → exposición del problema (2-3 líneas) → petición concreta → cierre → firma.
+Sin relleno, sin repetición. Directo y respetuoso.
+{wa_rules}"""
 
 
 def _detect_doc_type(message: str) -> str:
@@ -65,6 +70,7 @@ def make_redactor_node(llm_client: ILlmClient, data_dir=None):
             mesa_partes=municipio.get("mesa_partes", "Mesa de Partes Municipal"),
             fecha=date.today().strftime("%d de %B de %Y"),
             issue=profile.get("issue", "problemática ciudadana"),
+            wa_rules=WA_RULES,
         )
         response = await llm_client.generate_with_history(system_prompt, state["conversation_history"])
         return {

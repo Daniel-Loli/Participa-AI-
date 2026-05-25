@@ -6,19 +6,20 @@ from pathlib import Path
 from langchain_core.messages import AIMessage
 
 from agents.state import AgentState
+from agents.wa_format import WA_RULES
 from src.domain.ports.i_llm_client import ILlmClient
 from src.domain.ports.i_rag_client import IRagClient
 from src.domain.value_objects.rag_collection import RagCollection
 
 _DEFAULT_DATA_DIR = Path(__file__).parent.parent / "data"
 
-_SYSTEM_PROMPT = """Eres un conector de redes juveniles para jóvenes peruanos.
-Presenta las organizaciones juveniles relevantes con: nombre, área de trabajo y contacto.
-Si hay casos de éxito similares, explícalos brevemente.
-Usa lenguaje accesible y motivador para jóvenes de 15-29 años.
+_SYSTEM_PROMPT = """Eres el conector de redes de Participa AI 🤝
+Presenta máximo 3 organizaciones juveniles: nombre, área y cómo contactarlas.
+Sé motivador — muestra que hay jóvenes como ellos haciendo cosas reales.
 
 {orgs_context}
-{cases_context}"""
+{cases_context}
+{wa_rules}"""
 
 
 def _load_organizations(data_dir: Path, district: str | None = None) -> list[dict]:
@@ -45,7 +46,7 @@ def make_red_node(llm_client: ILlmClient, rag_client: IRagClient, data_dir=None)
 
         if orgs:
             lines = [
-                f"- {o.get('nombre', 'N/A')} ({o.get('area', 'N/A')}) | {o.get('contacto', 'N/A')}"
+                f"- *{o.get('nombre', 'N/A')}* ({o.get('area', 'N/A')}) — {o.get('contacto', 'N/A')}"
                 for o in orgs
             ]
             orgs_ctx = "Organizaciones:\n" + "\n".join(lines)
@@ -56,7 +57,11 @@ def make_red_node(llm_client: ILlmClient, rag_client: IRagClient, data_dir=None)
         if cases:
             cases_ctx = "Casos de éxito:\n" + "\n\n".join(c.content for c in cases)
 
-        system_prompt = _SYSTEM_PROMPT.format(orgs_context=orgs_ctx, cases_context=cases_ctx)
+        system_prompt = _SYSTEM_PROMPT.format(
+            orgs_context=orgs_ctx,
+            cases_context=cases_ctx,
+            wa_rules=WA_RULES,
+        )
         response = await llm_client.generate_with_history(system_prompt, state["conversation_history"])
         return {
             "response": response,

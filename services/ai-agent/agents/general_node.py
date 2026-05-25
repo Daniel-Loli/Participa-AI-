@@ -3,18 +3,18 @@ from __future__ import annotations
 from langchain_core.messages import AIMessage
 
 from agents.state import AgentState
+from agents.wa_format import WA_RULES
 from src.domain.ports.i_llm_client import ILlmClient
 from src.domain.ports.i_rag_client import IRagClient
 from src.domain.value_objects.rag_collection import RagCollection
 
-_GUARDRAIL_PROMPT = """Eres Participa AI, asistente de participación ciudadana para jóvenes peruanos.
-Solo puedes hablar sobre: leyes peruanas, participación ciudadana, ODS, organizaciones juveniles, presupuesto participativo.
-NUNCA emitas opiniones políticas ni sobre candidatos o partidos.
-Si la consulta está fuera de tu ámbito responde exactamente:
-"Eso está fuera de lo que puedo ayudarte. ¿Te puedo orientar sobre participación ciudadana, leyes o cómo conectarte con organizaciones juveniles?"
-Responde en lenguaje simple, accesible para jóvenes de 15-29 años.
+_SYSTEM_PROMPT = """Eres Participa AI, guía de participación ciudadana para jóvenes peruanos 🇵🇪
+Solo hablas de: leyes peruanas, participación ciudadana, ODS, organizaciones juveniles, presupuesto participativo.
+Nunca opines sobre política, candidatos o partidos.
+Si la pregunta está fuera de tu ámbito responde: "Eso está fuera de lo que puedo ayudarte. ¿Te oriento sobre participación ciudadana o leyes?"
 
-{context}"""
+{context}
+{wa_rules}"""
 
 
 def make_general_node(llm_client: ILlmClient, rag_client: IRagClient):
@@ -24,9 +24,9 @@ def make_general_node(llm_client: ILlmClient, rag_client: IRagClient):
 
         context = ""
         if all_docs:
-            context = "Contexto relevante:\n" + "\n\n".join(doc.content for doc in all_docs)
+            context = "Contexto:\n" + "\n\n".join(doc.content for doc in all_docs)
 
-        system_prompt = _GUARDRAIL_PROMPT.format(context=context)
+        system_prompt = _SYSTEM_PROMPT.format(context=context, wa_rules=WA_RULES)
         response = await llm_client.generate_with_history(system_prompt, state["conversation_history"])
         return {
             "response": response,

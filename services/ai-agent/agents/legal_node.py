@@ -3,23 +3,27 @@ from __future__ import annotations
 from langchain_core.messages import AIMessage
 
 from agents.state import AgentState
+from agents.wa_format import WA_RULES
 from src.domain.ports.i_llm_client import ILlmClient
 from src.domain.ports.i_rag_client import IRagClient
 from src.domain.value_objects.rag_collection import RagCollection
 
-_PROMPT_WITH_CONTEXT = """Eres un asistente legal ciudadano para jóvenes peruanos.
-Usa solo la legislación peruana provista en el contexto.
-No opines sobre política. Responde en lenguaje simple.
-Cita el artículo específico cuando sea relevante.
-Si no está en el contexto, dilo honestamente.
+_PROMPT_WITH_CONTEXT = """Eres el asesor legal de Participa AI para jóvenes peruanos ⚖️
+Explica las leyes en lenguaje simple, nunca en jerga legal.
+Cita el artículo exacto cuando sea relevante.
+Si algo no está en el contexto, dilo honestamente.
+Nunca opines sobre política.
 
-Contexto legal:
-{context}"""
+Legislación relevante:
+{context}
+{wa_rules}"""
 
-_PROMPT_NO_CONTEXT = """Eres un asistente legal ciudadano para jóvenes peruanos.
-No opines sobre política. Responde en lenguaje simple.
-Cita artículos específicos cuando sea relevante.
-Si no conoces la respuesta, dilo honestamente."""
+_PROMPT_NO_CONTEXT = """Eres el asesor legal de Participa AI para jóvenes peruanos ⚖️
+Explica las leyes en lenguaje simple, nunca en jerga legal.
+Cita artículos cuando sea relevante.
+Si no conoces la respuesta exacta, dilo honestamente.
+Nunca opines sobre política.
+{wa_rules}"""
 
 
 def make_legal_node(llm_client: ILlmClient, rag_client: IRagClient):
@@ -28,9 +32,9 @@ def make_legal_node(llm_client: ILlmClient, rag_client: IRagClient):
 
         if docs:
             context = "\n\n".join(doc.content for doc in docs)
-            system_prompt = _PROMPT_WITH_CONTEXT.format(context=context)
+            system_prompt = _PROMPT_WITH_CONTEXT.format(context=context, wa_rules=WA_RULES)
         else:
-            system_prompt = _PROMPT_NO_CONTEXT
+            system_prompt = _PROMPT_NO_CONTEXT.format(wa_rules=WA_RULES)
 
         response = await llm_client.generate_with_history(system_prompt, state["conversation_history"])
         return {

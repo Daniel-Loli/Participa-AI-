@@ -33,14 +33,15 @@ def make_onboarding_node(llm_client: ILlmClient):
                 pass
 
         if not profile.get("name"):
-            response = "¡Hola! Soy Participa AI. ¿Cómo te llamas?"
+            response = "¡Hola! Soy *Participa AI* 🇵🇪\n\nTe ayudo a participar en tu comunidad de forma concreta y legal.\n\n¿Cómo te llamas?"
         elif not profile.get("district"):
-            response = f"¡Hola {profile['name']}! ¿De qué distrito eres? Así te ayudo mejor."
+            response = f"¡Buenísimo, {profile['name']}! 👋\n\n¿De qué distrito eres? Así te conecto con las oportunidades más cercanas a ti."
         else:
             profile["conversation_stage"] = "ACTIVE"
             response = (
-                f"¡Perfecto {profile['name']} de {profile['district']}! "
-                "¿Cuál es la problemática que más te preocupa en tu comunidad?"
+                f"¡Perfecto! {profile['name']} de *{profile['district']}* — ya te tengo ubicado/a 📍\n\n"
+                "¿Cuál es el problema que más te preocupa en tu comunidad?\n"
+                "_(Ej: basura, inseguridad, falta de parques, corrupción...)_"
             )
 
         return {

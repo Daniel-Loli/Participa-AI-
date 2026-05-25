@@ -6,6 +6,7 @@ import logging
 
 from langchain_core.messages import HumanMessage
 
+from agents.wa_format import clean as wa_clean
 from src.application.errors import OrchestratorError, SttTranscriptionError
 from src.domain.entities.agent_response import AgentResponse
 from src.domain.entities.message import Message
@@ -56,7 +57,8 @@ class ProcessMessageUseCase:
 
         await self._save_profile(message.session_id, final_state.get("user_profile", {}))
 
-        return await self._build_response(message, final_state.get("response", ""))
+        response_text = wa_clean(final_state.get("response", ""))
+        return await self._build_response(message, response_text)
 
     async def _transcribe_if_audio(self, message: Message) -> str:
         if message.is_text():

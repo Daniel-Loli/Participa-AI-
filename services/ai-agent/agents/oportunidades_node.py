@@ -7,19 +7,18 @@ from pathlib import Path
 from langchain_core.messages import AIMessage
 
 from agents.state import AgentState
+from agents.wa_format import WA_RULES
 from src.domain.ports.i_llm_client import ILlmClient
 from src.domain.ports.i_rag_client import IRagClient
 
 _DEFAULT_DATA_DIR = Path(__file__).parent.parent / "data"
 
-_SYSTEM_PROMPT = """Eres un asistente de participación ciudadana para jóvenes peruanos.
-Lista las oportunidades de participación más próximas con:
-- Fecha exacta
-- Tipo de evento
-- Qué debe hacer el usuario para participar
-Sé conciso y usa lenguaje accesible para jóvenes de 15-29 años.
+_SYSTEM_PROMPT = """Eres el radar de oportunidades de Participa AI 📅
+Presenta las 3 oportunidades más próximas con: fecha, qué es y cómo participar.
+Sé directo — el joven tiene que saber exactamente qué hacer.
 
-{calendar_context}"""
+{calendar_context}
+{wa_rules}"""
 
 
 def _load_opportunities(data_dir: Path, district: str | None = None) -> list[dict]:
@@ -51,8 +50,10 @@ def make_oportunidades_node(llm_client: ILlmClient, rag_client: IRagClient, data
         if events:
             lines = [f"- {e.get('fecha')} | {e.get('tipo')} | {e.get('descripcion', '')}" for e in events]
             calendar_ctx = "Oportunidades próximas:\n" + "\n".join(lines)
+        else:
+            calendar_ctx = "No hay eventos próximos registrados en tu distrito."
 
-        system_prompt = _SYSTEM_PROMPT.format(calendar_context=calendar_ctx)
+        system_prompt = _SYSTEM_PROMPT.format(calendar_context=calendar_ctx, wa_rules=WA_RULES)
         response = await llm_client.generate_with_history(system_prompt, state["conversation_history"])
         return {
             "response": response,
