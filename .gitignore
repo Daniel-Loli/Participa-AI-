@@ -3,8 +3,9 @@
 .env.local
 .env.*.local
 
-# Documentación interna
+# Documentación interna (excluye README.md público)
 *.md
+!README.md
 .claude/
 
 # OS
