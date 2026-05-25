@@ -1,4 +1,23 @@
 steps:
+  # ── Build y push: Scraper ─────────────────────────────────────────────────
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - build
+      - -t
+      - us-central1-docker.pkg.dev/$PROJECT_ID/participa-ai/scraper:$COMMIT_SHA
+      - -t
+      - us-central1-docker.pkg.dev/$PROJECT_ID/participa-ai/scraper:latest
+      - ./data-pipeline/scraper
+    id: build-scraper
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - push
+      - --all-tags
+      - us-central1-docker.pkg.dev/$PROJECT_ID/participa-ai/scraper
+    id: push-scraper
+    waitFor: [build-scraper]
+
   # ── Build y push: AI Agent ────────────────────────────────────────────────
   - name: 'gcr.io/cloud-builders/docker'
     args:
@@ -83,7 +102,26 @@ steps:
     id: deploy-whatsapp
     waitFor: [remove-secret-whatsapp]
 
+  # ── Deploy: Scraper (Cloud Run Job) ───────────────────────────────────────
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - run
+      - jobs
+      - deploy
+      - participa-scraper
+      - --image=us-central1-docker.pkg.dev/$PROJECT_ID/participa-ai/scraper:$COMMIT_SHA
+      - --region=us-central1
+      - --max-retries=1
+      - --task-timeout=600
+      - --memory=512Mi
+      - --set-env-vars=OPENAI_EMBEDDING_MODEL=text-embedding-3-small
+      - --set-secrets=OPENAI_API_KEY=OPENAI_API_KEY:latest,QDRANT_URL=QDRANT_URL:latest,QDRANT_API_KEY=QDRANT_API_KEY:latest
+    id: deploy-scraper
+    waitFor: [push-scraper]
+
 images:
+  - us-central1-docker.pkg.dev/$PROJECT_ID/participa-ai/scraper:$COMMIT_SHA
+  - us-central1-docker.pkg.dev/$PROJECT_ID/participa-ai/scraper:latest
   - us-central1-docker.pkg.dev/$PROJECT_ID/participa-ai/ai-agent:$COMMIT_SHA
   - us-central1-docker.pkg.dev/$PROJECT_ID/participa-ai/ai-agent:latest
   - us-central1-docker.pkg.dev/$PROJECT_ID/participa-ai/whatsapp:$COMMIT_SHA
