@@ -2,8 +2,6 @@
 
 Agente conversacional WhatsApp que guía a jóvenes peruanos (15-29 años) desde una preocupación ciudadana hasta una acción de incidencia concreta, legal y verificable.
 
-**Hackathon Becas BCP 2025**
-
 ---
 
 ## Stack
