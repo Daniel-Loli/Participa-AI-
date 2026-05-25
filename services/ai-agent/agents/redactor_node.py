@@ -4,6 +4,8 @@ import json
 from datetime import date
 from pathlib import Path
 
+from langchain_core.messages import AIMessage
+
 from agents.state import AgentState
 from src.domain.ports.i_llm_client import ILlmClient
 
@@ -64,10 +66,11 @@ def make_redactor_node(llm_client: ILlmClient, data_dir=None):
             fecha=date.today().strftime("%d de %B de %Y"),
             issue=profile.get("issue", "problemática ciudadana"),
         )
-        response = await llm_client.generate(system_prompt, state["user_message"])
+        response = await llm_client.generate_with_history(system_prompt, state["conversation_history"])
         return {
             "response": response,
             "tool_data": {"municipio": municipio, "tipo_documento": doc_type},
+            "conversation_history": [AIMessage(content=response)],
         }
 
     return redactor

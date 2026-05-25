@@ -4,6 +4,8 @@ import json
 from datetime import date
 from pathlib import Path
 
+from langchain_core.messages import AIMessage
+
 from agents.state import AgentState
 from src.domain.ports.i_llm_client import ILlmClient
 from src.domain.ports.i_rag_client import IRagClient
@@ -51,10 +53,11 @@ def make_oportunidades_node(llm_client: ILlmClient, rag_client: IRagClient, data
             calendar_ctx = "Oportunidades próximas:\n" + "\n".join(lines)
 
         system_prompt = _SYSTEM_PROMPT.format(calendar_context=calendar_ctx)
-        response = await llm_client.generate(system_prompt, state["user_message"])
+        response = await llm_client.generate_with_history(system_prompt, state["conversation_history"])
         return {
             "response": response,
             "tool_data": {"oportunidades": events},
+            "conversation_history": [AIMessage(content=response)],
         }
 
     return oportunidades

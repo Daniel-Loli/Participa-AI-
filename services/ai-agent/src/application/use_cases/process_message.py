@@ -4,6 +4,8 @@ import base64
 import dataclasses
 import logging
 
+from langchain_core.messages import HumanMessage
+
 from src.application.errors import OrchestratorError, SttTranscriptionError
 from src.domain.entities.agent_response import AgentResponse
 from src.domain.entities.message import Message
@@ -41,7 +43,7 @@ class ProcessMessageUseCase:
             "rag_context": [],
             "tool_data": {},
             "response": "",
-            "conversation_history": [],
+            "conversation_history": [HumanMessage(content=text)],
         }
 
         try:

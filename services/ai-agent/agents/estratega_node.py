@@ -4,6 +4,8 @@ import json
 from datetime import date
 from pathlib import Path
 
+from langchain_core.messages import AIMessage
+
 from agents.state import AgentState
 from src.domain.ports.i_llm_client import ILlmClient
 from src.domain.ports.i_rag_client import IRagClient
@@ -63,11 +65,12 @@ def make_estratega_node(llm_client: ILlmClient, rag_client: IRagClient, data_dir
             calendar_context=calendar_ctx,
             rag_context=rag_ctx,
         )
-        response = await llm_client.generate(system_prompt, state["user_message"])
+        response = await llm_client.generate_with_history(system_prompt, state["conversation_history"])
         return {
             "response": response,
             "rag_context": [doc.content for doc in docs],
             "tool_data": {"eventos": events},
+            "conversation_history": [AIMessage(content=response)],
         }
 
     return estratega

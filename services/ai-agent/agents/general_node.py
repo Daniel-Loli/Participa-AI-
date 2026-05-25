@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from langchain_core.messages import AIMessage
+
 from agents.state import AgentState
 from src.domain.ports.i_llm_client import ILlmClient
 from src.domain.ports.i_rag_client import IRagClient
@@ -25,10 +27,11 @@ def make_general_node(llm_client: ILlmClient, rag_client: IRagClient):
             context = "Contexto relevante:\n" + "\n\n".join(doc.content for doc in all_docs)
 
         system_prompt = _GUARDRAIL_PROMPT.format(context=context)
-        response = await llm_client.generate(system_prompt, state["user_message"])
+        response = await llm_client.generate_with_history(system_prompt, state["conversation_history"])
         return {
             "response": response,
             "rag_context": [doc.content for doc in all_docs],
+            "conversation_history": [AIMessage(content=response)],
         }
 
     return general

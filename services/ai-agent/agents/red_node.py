@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from langchain_core.messages import AIMessage
+
 from agents.state import AgentState
 from src.domain.ports.i_llm_client import ILlmClient
 from src.domain.ports.i_rag_client import IRagClient
@@ -55,11 +57,12 @@ def make_red_node(llm_client: ILlmClient, rag_client: IRagClient, data_dir=None)
             cases_ctx = "Casos de éxito:\n" + "\n\n".join(c.content for c in cases)
 
         system_prompt = _SYSTEM_PROMPT.format(orgs_context=orgs_ctx, cases_context=cases_ctx)
-        response = await llm_client.generate(system_prompt, state["user_message"])
+        response = await llm_client.generate_with_history(system_prompt, state["conversation_history"])
         return {
             "response": response,
             "tool_data": {"organizaciones": orgs},
             "rag_context": [c.content for c in cases],
+            "conversation_history": [AIMessage(content=response)],
         }
 
     return red

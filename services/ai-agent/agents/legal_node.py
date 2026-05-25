@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from langchain_core.messages import AIMessage
+
 from agents.state import AgentState
 from src.domain.ports.i_llm_client import ILlmClient
 from src.domain.ports.i_rag_client import IRagClient
@@ -30,10 +32,11 @@ def make_legal_node(llm_client: ILlmClient, rag_client: IRagClient):
         else:
             system_prompt = _PROMPT_NO_CONTEXT
 
-        response = await llm_client.generate(system_prompt, state["user_message"])
+        response = await llm_client.generate_with_history(system_prompt, state["conversation_history"])
         return {
             "response": response,
             "rag_context": [doc.content for doc in docs],
+            "conversation_history": [AIMessage(content=response)],
         }
 
     return legal

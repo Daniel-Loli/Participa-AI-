@@ -33,3 +33,15 @@ class OpenAILlmAdapter(ILlmClient):
             raise LlmApiError(str(exc), status_code=exc.status_code) from exc
         except openai.APIError as exc:
             raise LlmApiError(str(exc)) from exc
+
+    async def generate_with_history(self, system_prompt: str, messages: list) -> str:
+        all_messages = [SystemMessage(content=system_prompt)] + list(messages)
+        try:
+            response = await self._client.ainvoke(all_messages)
+            return str(response.content)
+        except openai.APITimeoutError as exc:
+            raise LlmTimeoutError("LLM no respondió en 30s") from exc
+        except openai.APIStatusError as exc:
+            raise LlmApiError(str(exc), status_code=exc.status_code) from exc
+        except openai.APIError as exc:
+            raise LlmApiError(str(exc)) from exc
