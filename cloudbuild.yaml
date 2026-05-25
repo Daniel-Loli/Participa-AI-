@@ -54,6 +54,18 @@ steps:
     id: deploy-ai-agent
     waitFor: [push-ai-agent]
 
+  # ── Pre-limpieza: elimina AI_AGENT_SERVICE_URL como secret (no-fatal si el servicio no existe aún)
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        gcloud run services update participa-whatsapp \
+          --region=us-central1 \
+          --remove-secrets=AI_AGENT_SERVICE_URL || true
+    id: remove-secret-whatsapp
+    waitFor: [push-whatsapp, deploy-ai-agent]
+
   # ── Deploy: WhatsApp ───────────────────────────────────────────────────────
   - name: 'gcr.io/cloud-builders/gcloud'
     args:
@@ -66,11 +78,10 @@ steps:
       - --allow-unauthenticated
       - --port=3000
       - --memory=512Mi
-      - --remove-secrets=AI_AGENT_SERVICE_URL
-      - --set-env-vars=NODE_ENV=production,AI_AGENT_SERVICE_URL=https://participa-ai-agent-REEMPLAZAR.a.run.app
+      - --set-env-vars=NODE_ENV=production,AI_AGENT_SERVICE_URL=https://participa-ai-agent-87805706219.us-central1.run.app
       - --set-secrets=WHATSAPP_VERIFY_TOKEN=WHATSAPP_VERIFY_TOKEN:latest,WHATSAPP_ACCESS_TOKEN=WHATSAPP_ACCESS_TOKEN:latest,WHATSAPP_PHONE_NUMBER_ID=WHATSAPP_PHONE_NUMBER_ID:latest,WHATSAPP_APP_SECRET=WHATSAPP_APP_SECRET:latest
     id: deploy-whatsapp
-    waitFor: [push-whatsapp, deploy-ai-agent]
+    waitFor: [remove-secret-whatsapp]
 
 images:
   - us-central1-docker.pkg.dev/$PROJECT_ID/participa-ai/ai-agent:$COMMIT_SHA
