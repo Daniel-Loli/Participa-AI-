@@ -55,6 +55,7 @@ def make_onboarding_node(llm_client: ILlmClient):
         profile = dict(state.get("user_profile") or {})
 
         # Intentar extraer nombre y/o distrito del mensaje actual
+        had_district = bool(profile.get("district"))
         if not profile.get("name") or not profile.get("district"):
             try:
                 raw = await llm_client.generate(_EXTRACT_PROMPT, state["user_message"])
@@ -65,6 +66,7 @@ def make_onboarding_node(llm_client: ILlmClient):
                     profile["district"] = data["distrito"]
             except Exception:
                 pass
+        just_got_district = not had_district and bool(profile.get("district"))
 
         # Paso 1: pedir nombre
         if not profile.get("name"):
@@ -83,7 +85,9 @@ def make_onboarding_node(llm_client: ILlmClient):
 
         # Paso 3: pedir problemática (con menú si aún no la tiene)
         elif not profile.get("issue"):
-            issue = _resolve_issue(state["user_message"])
+            # Si el distrito se acaba de extraer de ESTE mensaje, no usar el mismo
+            # mensaje para extraer el issue — mostrar el menú en el próximo turno
+            issue = None if just_got_district else _resolve_issue(state["user_message"])
             if issue:
                 profile["issue"] = issue
                 profile["conversation_stage"] = "ACTIVE"

@@ -45,6 +45,11 @@ class ProcessMessageUseCase:
             "tool_data": {},
             "response": "",
             "conversation_history": [HumanMessage(content=text)],
+            # Resetear explícitamente para evitar que el checkpointer de Redis
+            # reutilice el PDF del turno anterior
+            "pdf_base64": None,
+            "pdf_filename": None,
+            "doc_confirmed": False,
         }
 
         try:
