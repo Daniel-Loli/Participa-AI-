@@ -4,6 +4,7 @@ import json
 
 from langchain_core.messages import AIMessage
 
+from agents.menu_node import MAIN_MENU
 from agents.state import AgentState
 from src.domain.ports.i_llm_client import ILlmClient
 
@@ -93,11 +94,7 @@ def make_onboarding_node(llm_client: ILlmClient):
                 profile["conversation_stage"] = "ACTIVE"
                 response = (
                     f"Entendido, *{issue}* en {profile['district']} 📍\n\n"
-                    "Estoy listo para ayudarte. ¿Por dónde quieres empezar?\n\n"
-                    "1. Conocer mis derechos y leyes\n"
-                    "2. Ver qué acciones puedo tomar\n"
-                    "3. Redactar una carta o solicitud\n"
-                    "4. Conectar con organizaciones juveniles"
+                    f"Estoy listo para ayudarte. ¿Por dónde quieres empezar?\n\n{MAIN_MENU}"
                 )
             elif state["user_message"].strip() == "7":
                 response = "Cuéntame con tus palabras, ¿cuál es el problema que te preocupa?"

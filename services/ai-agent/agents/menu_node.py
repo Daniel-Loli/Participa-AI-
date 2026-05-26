@@ -1,0 +1,29 @@
+from __future__ import annotations
+
+from langchain_core.messages import AIMessage
+
+from agents.state import AgentState
+
+MAIN_MENU = (
+    "1. ⚖️ Conocer mis derechos y leyes\n"
+    "2. 🗺️ Ver qué acciones puedo tomar\n"
+    "3. ✍️ Redactar una carta o solicitud\n"
+    "4. 📅 Ver oportunidades en mi distrito\n"
+    "5. 🤝 Conectar con organizaciones juveniles"
+)
+
+
+def make_menu_node():
+    async def menu(state: AgentState) -> dict:
+        profile = state.get("user_profile") or {}
+        name = profile.get("name", "")
+        saludo = f"¡Hola de nuevo, {name}! 👋" if name else "¡Hola! 👋"
+
+        response = f"{saludo}\n\n¿En qué te puedo ayudar hoy?\n\n{MAIN_MENU}"
+
+        return {
+            "response": response,
+            "conversation_history": [AIMessage(content=response)],
+        }
+
+    return menu

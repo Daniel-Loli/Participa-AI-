@@ -7,6 +7,7 @@ from agents.estratega_node import make_estratega_node
 from agents.general_node import make_general_node
 from agents.legal_node import make_legal_node
 from agents.legal_redactor_node import make_legal_redactor_node
+from agents.menu_node import make_menu_node
 from agents.onboarding_node import make_onboarding_node
 from agents.oportunidades_node import make_oportunidades_node
 from agents.red_node import make_red_node
@@ -30,6 +31,7 @@ def build_graph(llm_client: ILlmClient, rag_client: IRagClient, checkpointer):
 
     builder.add_node("classify_intent", make_classify_intent_node(llm_client))
     builder.add_node("onboarding", make_onboarding_node(llm_client))
+    builder.add_node("menu", make_menu_node())
     builder.add_node("legal", make_legal_node(llm_client, rag_client))
     builder.add_node("legal_redactor", make_legal_redactor_node(llm_client, rag_client))
     builder.add_node("estratega", make_estratega_node(llm_client, rag_client))
@@ -45,6 +47,7 @@ def build_graph(llm_client: ILlmClient, rag_client: IRagClient, checkpointer):
         route_by_intent,
         {
             "onboarding": "onboarding",
+            "menu": "menu",
             "legal": "legal",
             "legal_redactor": "legal_redactor",
             "estratega": "estratega",
@@ -55,7 +58,7 @@ def build_graph(llm_client: ILlmClient, rag_client: IRagClient, checkpointer):
         },
     )
 
-    for node_name in ["onboarding", "legal", "legal_redactor", "estratega", "oportunidades", "red", "redactor", "general"]:
+    for node_name in ["onboarding", "menu", "legal", "legal_redactor", "estratega", "oportunidades", "red", "redactor", "general"]:
         builder.add_edge(node_name, END)
 
     return builder.compile(checkpointer=checkpointer)
