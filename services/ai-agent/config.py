@@ -16,12 +16,18 @@ class Config(BaseSettings):
     # OpenAI — críticas
     openai_api_key: str
 
-    # OpenAI — opcionales con defaults
-    openai_model: str = "gpt-4o-mini"
+    # OpenAI — modelos LLM por tier de tarea
+    openai_model_nano: str = "gpt-4.1-nano"    # classify_intent, onboarding (velocidad)
+    openai_model_mini: str = "gpt-4.1-mini"    # legal, estratega, red, oportunidades, general
+    openai_model_full: str = "gpt-4.1"         # redactor (documentos formales, mayor calidad)
+
+    # Mantener por compatibilidad con código existente fuera del grafo
+    openai_model: str = "gpt-4.1-mini"
+
     openai_embedding_model: str = "text-embedding-3-small"
     openai_whisper_model: str = "whisper-1"
     openai_tts_model: str = "tts-1"
-    openai_tts_voice: str = "alloy"
+    openai_tts_voice: str = "nova"             # voz femenina cálida y amigable
 
     # Qdrant Cloud — críticas
     qdrant_url: str

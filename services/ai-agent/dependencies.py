@@ -35,10 +35,10 @@ def _build_redis_url(config: Config) -> str:
 async def init_dependencies(config: Config) -> None:
     global _use_case, _checkpointer
 
-    llm = OpenAILlmAdapter(
-        api_key=config.openai_api_key,
-        model=config.openai_model,
-    )
+    llm_nano = OpenAILlmAdapter(api_key=config.openai_api_key, model=config.openai_model_nano)
+    llm_mini = OpenAILlmAdapter(api_key=config.openai_api_key, model=config.openai_model_mini)
+    llm_full = OpenAILlmAdapter(api_key=config.openai_api_key, model=config.openai_model_full)
+
     stt = OpenAISttAdapter(
         api_key=config.openai_api_key,
         model=config.openai_whisper_model,
@@ -64,7 +64,7 @@ async def init_dependencies(config: Config) -> None:
     _checkpointer = AsyncRedisSaver(redis_url=redis_url)
     await _checkpointer.asetup()
 
-    graph = build_graph(llm, rag, _checkpointer)
+    graph = build_graph(llm_nano, llm_mini, llm_full, rag, _checkpointer)
 
     _use_case = ProcessMessageUseCase(stt, tts, session_store, graph)
     logger.info("Dependencias inicializadas correctamente")

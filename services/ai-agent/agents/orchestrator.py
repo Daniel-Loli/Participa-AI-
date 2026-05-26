@@ -25,20 +25,32 @@ def route_by_intent(state: AgentState) -> str:
     return intent if intent in _VALID_INTENTS else AgentIntent.GENERAL.value
 
 
-def build_graph(llm_client: ILlmClient, rag_client: IRagClient, checkpointer):
-    """Construye el grafo LangGraph. checkpointer ya debe estar inicializado (setup)."""
+def build_graph(
+    llm_nano: ILlmClient,
+    llm_mini: ILlmClient,
+    llm_full: ILlmClient,
+    rag_client: IRagClient,
+    checkpointer,
+):
+    """Construye el grafo LangGraph. checkpointer ya debe estar inicializado (setup).
+
+    Tier de modelos:
+      nano → classify_intent, onboarding  (velocidad máxima, tareas simples)
+      mini → legal, legal_redactor, estratega, oportunidades, red, general  (calidad en español)
+      full → redactor  (documentos formales, mayor calidad)
+    """
     builder = StateGraph(AgentState)
 
-    builder.add_node("classify_intent", make_classify_intent_node(llm_client))
-    builder.add_node("onboarding", make_onboarding_node(llm_client))
+    builder.add_node("classify_intent", make_classify_intent_node(llm_nano))
+    builder.add_node("onboarding", make_onboarding_node(llm_nano))
     builder.add_node("menu", make_menu_node())
-    builder.add_node("legal", make_legal_node(llm_client, rag_client))
-    builder.add_node("legal_redactor", make_legal_redactor_node(llm_client, rag_client))
-    builder.add_node("estratega", make_estratega_node(llm_client, rag_client))
-    builder.add_node("oportunidades", make_oportunidades_node(llm_client, rag_client))
-    builder.add_node("red", make_red_node(llm_client, rag_client))
-    builder.add_node("redactor", make_redactor_node(llm_client))
-    builder.add_node("general", make_general_node(llm_client, rag_client))
+    builder.add_node("legal", make_legal_node(llm_mini, rag_client))
+    builder.add_node("legal_redactor", make_legal_redactor_node(llm_mini, rag_client))
+    builder.add_node("estratega", make_estratega_node(llm_mini, rag_client))
+    builder.add_node("oportunidades", make_oportunidades_node(llm_mini, rag_client))
+    builder.add_node("red", make_red_node(llm_mini, rag_client))
+    builder.add_node("redactor", make_redactor_node(llm_full))
+    builder.add_node("general", make_general_node(llm_mini, rag_client))
 
     builder.set_entry_point("classify_intent")
 
