@@ -43,7 +43,8 @@ export class CheckInactiveSessionsUseCase {
 
     if (shouldClose && warningSent) {
       await this.sender.sendText(sessionId, GOODBYE_MSG);
-      await this.aiAgent.deleteSession(sessionId);
+      // Fire-and-forget: el AI agent puede estar en cold start; limpiar sus claves no es crítico
+      this.aiAgent.deleteSession(sessionId).catch(() => {});
       await this.sessionActivity.clearActivityKeys(sessionId);
     } else if (!warningSent) {
       await this.sender.sendText(sessionId, WARNING_MSG);
