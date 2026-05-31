@@ -6,7 +6,8 @@
 # Documentación interna (excluye README.md público)
 *.md
 !README.md
-.claude/
+!CLAUDE.md
+!.claude/**
 
 # OS
 .DS_Store
