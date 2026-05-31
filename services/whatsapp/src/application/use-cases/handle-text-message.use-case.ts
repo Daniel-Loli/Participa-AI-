@@ -5,6 +5,7 @@ import { IMessageSender } from '../../domain/ports/message-sender.port';
 import { Message } from '../../domain/entities/message.entity';
 import { AgentTimeoutError } from '../errors/agent.errors';
 import { INJECTION_TOKENS } from '../../injection-tokens';
+import { sendInParts } from '../utils/message-splitter';
 
 const WAIT_MESSAGE = 'Estoy procesando tu mensaje, en un momento te respondo 🙏';
 
@@ -27,7 +28,7 @@ export class HandleTextMessageUseCase {
 
       if (response.response_type === 'document' && response.response_pdf_base64) {
         if (response.response_text) {
-          await this.sender.sendText(message.from, response.response_text);
+          await sendInParts((t) => this.sender.sendText(message.from, t), response.response_text);
         }
         await this.sender.sendDocument(
           message.from,
@@ -38,7 +39,7 @@ export class HandleTextMessageUseCase {
       } else if (response.response_type === 'audio' && response.response_audio_base64) {
         await this.sender.sendAudio(message.from, response.response_audio_base64, 'audio/ogg');
       } else {
-        await this.sender.sendText(message.from, response.response_text!);
+        await sendInParts((t) => this.sender.sendText(message.from, t), response.response_text!);
       }
     } catch (error) {
       const fromHash = createHash('sha256').update(message.from).digest('hex').slice(0, 8);

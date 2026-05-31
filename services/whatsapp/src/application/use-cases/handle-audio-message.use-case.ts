@@ -6,6 +6,7 @@ import { IMessageSender } from '../../domain/ports/message-sender.port';
 import { Message } from '../../domain/entities/message.entity';
 import { AgentTimeoutError } from '../errors/agent.errors';
 import { INJECTION_TOKENS } from '../../injection-tokens';
+import { sendInParts } from '../utils/message-splitter';
 
 const DOWNLOAD_FAILURE_MESSAGE =
   'No pude recibir tu nota de voz. ¿Puedes reenviarla o escribirme tu consulta?';
@@ -51,7 +52,7 @@ export class HandleAudioMessageUseCase {
 
       if (response.response_type === 'document' && response.response_pdf_base64) {
         if (response.response_text) {
-          await this.sender.sendText(message.from, response.response_text);
+          await sendInParts((t) => this.sender.sendText(message.from, t), response.response_text);
         }
         await this.sender.sendDocument(
           message.from,
@@ -62,7 +63,7 @@ export class HandleAudioMessageUseCase {
       } else if (response.response_type === 'audio' && response.response_audio_base64) {
         await this.sender.sendAudio(message.from, response.response_audio_base64, 'audio/mpeg');
       } else {
-        await this.sender.sendText(message.from, response.response_text!);
+        await sendInParts((t) => this.sender.sendText(message.from, t), response.response_text!);
       }
     } catch (error) {
       if (error instanceof AgentTimeoutError) {

@@ -10,6 +10,8 @@ class UserProfile:
     district: str | None = None
     issue: str | None = None
     conversation_stage: str = "ONBOARDING"  # ONBOARDING | ACTIVE
+    awaiting_doc_confirmation: bool = False  # esperando que el usuario confirme generar documento
+    awaiting_next_action: bool = False       # esperando selección del menú post-documento
 
     def is_complete(self) -> bool:
         return bool(self.name and self.district)

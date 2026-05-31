@@ -98,6 +98,8 @@ class ProcessMessageUseCase:
                 district=profile_dict.get("district"),
                 issue=profile_dict.get("issue"),
                 conversation_stage=profile_dict.get("conversation_stage", "ONBOARDING"),
+                awaiting_doc_confirmation=bool(profile_dict.get("awaiting_doc_confirmation", False)),
+                awaiting_next_action=bool(profile_dict.get("awaiting_next_action", False)),
             )
             await self._session_store.save_profile(profile)
         except Exception as exc:
