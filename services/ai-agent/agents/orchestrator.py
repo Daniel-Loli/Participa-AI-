@@ -13,6 +13,7 @@ from agents.oportunidades_node import make_oportunidades_node
 from agents.red_node import make_red_node
 from agents.redactor_node import make_redactor_node
 from agents.state import AgentState
+from agents.tone_node import make_tone_review_node
 from src.domain.ports.i_llm_client import ILlmClient
 from src.domain.ports.i_rag_client import IRagClient
 from src.domain.value_objects.agent_intent import AgentIntent
@@ -51,6 +52,7 @@ def build_graph(
     builder.add_node("red", make_red_node(llm_mini, rag_client))
     builder.add_node("redactor", make_redactor_node(llm_full))
     builder.add_node("general", make_general_node(llm_mini, rag_client))
+    builder.add_node("tone_review", make_tone_review_node(llm_mini))
 
     builder.set_entry_point("classify_intent")
 
@@ -70,7 +72,10 @@ def build_graph(
         },
     )
 
+    # Todos los nodos activos pasan por tone_review antes de terminar
     for node_name in ["onboarding", "menu", "legal", "legal_redactor", "estratega", "oportunidades", "red", "redactor", "general"]:
-        builder.add_edge(node_name, END)
+        builder.add_edge(node_name, "tone_review")
+
+    builder.add_edge("tone_review", END)
 
     return builder.compile(checkpointer=checkpointer)
