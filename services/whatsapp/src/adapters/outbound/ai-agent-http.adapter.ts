@@ -17,6 +17,15 @@ export class AiAgentHttpAdapter implements IAiAgentClient {
     return this.post(payload, 45_000);
   }
 
+  async deleteSession(sessionId: string): Promise<void> {
+    try {
+      await axios.delete(`${this.baseUrl}/session/${encodeURIComponent(sessionId)}`, { timeout: 5_000 });
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 404) return;
+      console.warn('[AiAgentHttpAdapter] Error al eliminar sesión en agente IA', { session_id_hash: sessionId.slice(0, 8) });
+    }
+  }
+
   private async post(
     payload: TextAgentPayload | AudioAgentPayload,
     timeoutMs: number,

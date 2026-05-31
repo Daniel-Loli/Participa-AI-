@@ -11,10 +11,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import get_config
 from dependencies import (
     cleanup_dependencies,
+    get_delete_session_use_case,
     get_process_message_use_case,
     init_dependencies,
 )
 from src.adapters.inbound.agent_router import (
+    get_delete_session_use_case as _delete_session_stub,
     get_process_message_use_case as _router_stub,
     router,
 )
@@ -53,11 +55,12 @@ app = FastAPI(title="Participa AI — Agent Service", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_ALLOWED_ORIGINS,
-    allow_methods=["GET", "POST"],
+    allow_methods=["GET", "POST", "DELETE"],
     allow_headers=["Content-Type", "Authorization"],
 )
 
 app.include_router(router)
 
-# Reemplaza el stub del router con la implementación real del contenedor de DI
+# Reemplaza los stubs del router con las implementaciones reales del contenedor de DI
 app.dependency_overrides[_router_stub] = get_process_message_use_case
+app.dependency_overrides[_delete_session_stub] = get_delete_session_use_case

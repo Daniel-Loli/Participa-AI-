@@ -11,11 +11,13 @@ from src.adapters.outbound.openai_stt_adapter import OpenAISttAdapter
 from src.adapters.outbound.openai_tts_adapter import OpenAITtsAdapter
 from src.adapters.outbound.qdrant_rag_adapter import QdrantRagAdapter
 from src.adapters.outbound.redis_session_adapter import RedisSessionAdapter
+from src.application.use_cases.delete_session import DeleteSessionUseCase
 from src.application.use_cases.process_message import ProcessMessageUseCase
 
 logger = logging.getLogger(__name__)
 
 _use_case: ProcessMessageUseCase | None = None
+_delete_session_use_case: DeleteSessionUseCase | None = None
 _checkpointer: AsyncRedisSaver | None = None
 
 
@@ -67,6 +69,7 @@ async def init_dependencies(config: Config) -> None:
     graph = build_graph(llm_nano, llm_mini, llm_full, rag, _checkpointer)
 
     _use_case = ProcessMessageUseCase(stt, tts, session_store, graph)
+    _delete_session_use_case = DeleteSessionUseCase(session_store)
     logger.info("Dependencias inicializadas correctamente")
 
 
@@ -84,3 +87,9 @@ def get_process_message_use_case() -> ProcessMessageUseCase:
     if _use_case is None:
         raise RuntimeError("Dependencias no inicializadas. Llama a init_dependencies() primero.")
     return _use_case
+
+
+def get_delete_session_use_case() -> DeleteSessionUseCase:
+    if _delete_session_use_case is None:
+        raise RuntimeError("Dependencias no inicializadas. Llama a init_dependencies() primero.")
+    return _delete_session_use_case

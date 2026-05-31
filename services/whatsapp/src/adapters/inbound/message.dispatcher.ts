@@ -1,6 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { HandleTextMessageUseCase } from '../../application/use-cases/handle-text-message.use-case';
 import { HandleAudioMessageUseCase } from '../../application/use-cases/handle-audio-message.use-case';
+import { UpdateSessionActivityUseCase } from '../../application/use-cases/update-session-activity.use-case';
 import { IMessageSender } from '../../domain/ports/message-sender.port';
 import { INJECTION_TOKENS } from '../../injection-tokens';
 import { Message } from '../../domain/entities/message.entity';
@@ -35,6 +36,7 @@ export class MessageDispatcher {
   constructor(
     private readonly handleText: HandleTextMessageUseCase,
     private readonly handleAudio: HandleAudioMessageUseCase,
+    private readonly updateSessionActivity: UpdateSessionActivityUseCase,
     @Inject(INJECTION_TOKENS.MESSAGE_SENDER) private readonly sender: IMessageSender,
   ) {}
 
@@ -46,6 +48,9 @@ export class MessageDispatcher {
     this.markAsProcessed(raw.id);
 
     const message = this.parseMessage(raw);
+
+    // Registrar actividad antes de procesar para resetear el timer de inactividad
+    await this.updateSessionActivity.execute(message.sessionId).catch(() => {});
 
     switch (message.type) {
       case MessageType.TEXT:

@@ -38,3 +38,18 @@ class RedisSessionAdapter(ISessionStore):
             await self._redis.setex(f"{_KEY_PREFIX}{profile.user_id}", _TTL_SECONDS, json_str)
         except RedisError as exc:
             logger.warning("Redis save_profile error para user '%s': %s", profile.user_id, exc)
+
+    async def delete_session(self, session_id: str) -> None:
+        try:
+            # Eliminar perfil de usuario
+            await self._redis.delete(f"{_KEY_PREFIX}{session_id}")
+            # Eliminar checkpoint LangGraph (patrón: claves que contienen el session_id)
+            cursor = 0
+            while True:
+                cursor, keys = await self._redis.scan(cursor, match=f"*{session_id}*", count=50)
+                if keys:
+                    await self._redis.delete(*keys)
+                if cursor == 0:
+                    break
+        except RedisError as exc:
+            logger.warning("Redis delete_session error para session '%s': %s", session_id, exc)

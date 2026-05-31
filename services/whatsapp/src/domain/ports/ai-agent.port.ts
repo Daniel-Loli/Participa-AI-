@@ -26,4 +26,5 @@ export interface AgentResponse {
 export interface IAiAgentClient {
   processText(payload: TextAgentPayload): Promise<AgentResponse>;
   processAudio(payload: AudioAgentPayload): Promise<AgentResponse>;
+  deleteSession(sessionId: string): Promise<void>;
 }

@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field, model_validator
 from typing import Literal
 
 from src.application.errors import OrchestratorError, SttTranscriptionError
+from src.application.use_cases.delete_session import DeleteSessionUseCase
 from src.application.use_cases.process_message import ProcessMessageUseCase
 from src.domain.entities.message import Message
 from src.domain.value_objects.message_type import MessageType
@@ -49,6 +50,10 @@ def get_process_message_use_case() -> ProcessMessageUseCase:
     raise RuntimeError("Dependencies not initialized. Call init_dependencies() first.")
 
 
+def get_delete_session_use_case() -> DeleteSessionUseCase:
+    raise RuntimeError("Dependencies not initialized. Call init_dependencies() first.")
+
+
 @router.post("/agent", response_model=AgentResponseDTO)
 async def process_message(
     body: AgentRequest,
@@ -83,6 +88,15 @@ async def process_message(
         response_pdf_base64=agent_response.response_pdf_base64,
         response_pdf_filename=agent_response.response_pdf_filename,
     )
+
+
+@router.delete("/session/{session_id}", status_code=200)
+async def delete_session(
+    session_id: str,
+    use_case: DeleteSessionUseCase = Depends(get_delete_session_use_case),
+) -> dict:
+    await use_case.execute(session_id)
+    return {"deleted": True}
 
 
 @router.get("/health")
