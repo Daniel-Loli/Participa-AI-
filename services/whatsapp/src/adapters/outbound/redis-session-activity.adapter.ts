@@ -12,22 +12,22 @@ export class RedisSessionActivityAdapter implements ISessionActivity {
   private readonly redis: Redis;
 
   constructor() {
-    const url = this.buildUrl(
-      process.env.REDIS_URL ?? 'redis://localhost:6379',
-      process.env.REDIS_PASSWORD,
-    );
-    this.redis = new Redis(url, { lazyConnect: true });
+    const rawUrl = process.env.REDIS_URL ?? 'redis://localhost:6379';
+    const envPassword = process.env.REDIS_PASSWORD;
+    const parsed = new URL(rawUrl);
+    const password = envPassword || parsed.password || undefined;
+
+    this.redis = new Redis({
+      host: parsed.hostname,
+      port: parseInt(parsed.port || '6379', 10),
+      username: 'default',
+      password,
+      tls: rawUrl.startsWith('rediss://') ? {} : undefined,
+      lazyConnect: true,
+    });
     this.redis.on('error', (err) =>
       console.warn('[RedisSessionActivityAdapter] Redis error:', err.message),
     );
-  }
-
-  private buildUrl(rawUrl: string, password?: string): string {
-    if (!password) return rawUrl;
-    const parsed = new URL(rawUrl);
-    parsed.username = parsed.username || 'default';
-    parsed.password = password;
-    return parsed.toString();
   }
 
   async updateLastActivity(sessionId: string): Promise<void> {
