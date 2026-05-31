@@ -35,7 +35,7 @@ def _build_redis_url(config: Config) -> str:
 
 
 async def init_dependencies(config: Config) -> None:
-    global _use_case, _checkpointer
+    global _use_case, _checkpointer, _delete_session_use_case
 
     llm_nano = OpenAILlmAdapter(api_key=config.openai_api_key, model=config.openai_model_nano)
     llm_mini = OpenAILlmAdapter(api_key=config.openai_api_key, model=config.openai_model_mini)
