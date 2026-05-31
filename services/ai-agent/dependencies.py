@@ -10,6 +10,7 @@ from src.adapters.outbound.openai_llm_adapter import OpenAILlmAdapter
 from src.adapters.outbound.openai_stt_adapter import OpenAISttAdapter
 from src.adapters.outbound.openai_tts_adapter import OpenAITtsAdapter
 from src.adapters.outbound.qdrant_rag_adapter import QdrantRagAdapter
+from src.adapters.outbound.redis_long_term_profile_adapter import RedisLongTermProfileAdapter
 from src.adapters.outbound.redis_session_adapter import RedisSessionAdapter
 from src.application.use_cases.delete_session import DeleteSessionUseCase
 from src.application.use_cases.process_message import ProcessMessageUseCase
@@ -61,6 +62,10 @@ async def init_dependencies(config: Config) -> None:
         redis_url=config.redis_url,
         redis_password=config.redis_password,
     )
+    lt_store = RedisLongTermProfileAdapter(
+        redis_url=config.redis_url,
+        redis_password=config.redis_password,
+    )
 
     redis_url = _build_redis_url(config)
     _checkpointer = AsyncRedisSaver(redis_url=redis_url)
@@ -68,7 +73,7 @@ async def init_dependencies(config: Config) -> None:
 
     graph = build_graph(llm_nano, llm_mini, llm_full, rag, _checkpointer)
 
-    _use_case = ProcessMessageUseCase(stt, tts, session_store, graph)
+    _use_case = ProcessMessageUseCase(stt, tts, session_store, lt_store, graph)
     _delete_session_use_case = DeleteSessionUseCase(session_store)
     logger.info("Dependencias inicializadas correctamente")
 

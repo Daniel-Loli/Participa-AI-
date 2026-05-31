@@ -41,14 +41,19 @@ class RedisSessionAdapter(ISessionStore):
 
     async def delete_session(self, session_id: str) -> None:
         try:
-            # Eliminar perfil de usuario
+            # Eliminar perfil de sesión (corto plazo)
             await self._redis.delete(f"{_KEY_PREFIX}{session_id}")
-            # Eliminar checkpoint LangGraph (patrón: claves que contienen el session_id)
+            # Eliminar checkpoints LangGraph; excluir profile_lt: que es memoria de largo plazo
             cursor = 0
             while True:
                 cursor, keys = await self._redis.scan(cursor, match=f"*{session_id}*", count=50)
                 if keys:
-                    await self._redis.delete(*keys)
+                    safe = [
+                        k for k in keys
+                        if not (k.decode() if isinstance(k, bytes) else k).startswith("profile_lt:")
+                    ]
+                    if safe:
+                        await self._redis.delete(*safe)
                 if cursor == 0:
                     break
         except RedisError as exc:

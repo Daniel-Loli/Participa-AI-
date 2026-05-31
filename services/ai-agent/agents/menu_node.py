@@ -17,9 +17,14 @@ def make_menu_node():
     async def menu(state: AgentState) -> dict:
         profile = state.get("user_profile") or {}
         name = profile.get("name", "")
+        lt_summary = state.get("lt_summary")
+
         saludo = f"¡Hola de nuevo, {name}! 👋" if name else "¡Hola! 👋"
 
-        response = f"{saludo}\n\n¿En qué te puedo ayudar hoy?\n\n{MAIN_MENU}"
+        # Si hay resumen de sesión anterior, mostrarlo como contexto de continuidad
+        contexto = f"\n\n_{lt_summary}_" if lt_summary else ""
+
+        response = f"{saludo}{contexto}\n\n¿En qué te puedo ayudar hoy?\n\n{MAIN_MENU}"
 
         return {
             "response": response,

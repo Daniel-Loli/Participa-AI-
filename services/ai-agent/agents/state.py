@@ -22,3 +22,4 @@ class AgentState(TypedDict):
     pdf_base64: NotRequired[str | None]         # PDF generado por redactor_node (base64)
     pdf_filename: NotRequired[str | None]       # nombre del archivo PDF
     doc_confirmed: NotRequired[bool]            # usuario confirmó generación del documento
+    lt_summary: NotRequired[str | None]         # resumen de la sesión anterior (memoria LT)
