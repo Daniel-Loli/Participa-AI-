@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from langchain_core.messages import AIMessage
-
 from agents.state import AgentState
 
 MAIN_MENU = (
@@ -28,7 +26,6 @@ def make_menu_node():
 
         return {
             "response": response,
-            "conversation_history": [AIMessage(content=response)],
         }
 
     return menu

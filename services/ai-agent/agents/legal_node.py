@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from langchain_core.messages import AIMessage
-
+from agents.history import trim_history
 from agents.state import AgentState
 from agents.wa_format import WA_RULES
 from src.domain.ports.i_llm_client import ILlmClient
@@ -36,11 +35,10 @@ def make_legal_node(llm_client: ILlmClient, rag_client: IRagClient):
         else:
             system_prompt = _PROMPT_NO_CONTEXT.format(wa_rules=WA_RULES)
 
-        response = await llm_client.generate_with_history(system_prompt, state["conversation_history"])
+        response = await llm_client.generate_with_history(system_prompt, trim_history(state["conversation_history"]))
         return {
             "response": response,
             "rag_context": [doc.content for doc in docs],
-            "conversation_history": [AIMessage(content=response)],
         }
 
     return legal

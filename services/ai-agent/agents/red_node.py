@@ -3,8 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from langchain_core.messages import AIMessage
-
+from agents.history import trim_history
 from agents.state import AgentState
 from agents.wa_format import WA_RULES
 from src.domain.ports.i_llm_client import ILlmClient
@@ -62,12 +61,11 @@ def make_red_node(llm_client: ILlmClient, rag_client: IRagClient, data_dir=None)
             cases_context=cases_ctx,
             wa_rules=WA_RULES,
         )
-        response = await llm_client.generate_with_history(system_prompt, state["conversation_history"])
+        response = await llm_client.generate_with_history(system_prompt, trim_history(state["conversation_history"]))
         return {
             "response": response,
             "tool_data": {"organizaciones": orgs},
             "rag_context": [c.content for c in cases],
-            "conversation_history": [AIMessage(content=response)],
         }
 
     return red

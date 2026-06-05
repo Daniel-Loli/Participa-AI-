@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from langchain_core.messages import AIMessage
+
 from agents.state import AgentState
 from src.domain.ports.i_llm_client import ILlmClient
 
@@ -33,9 +35,12 @@ def make_tone_review_node(llm_client: ILlmClient):
     async def tone_review(state: AgentState) -> dict:
         response = state.get("response", "")
 
-        # No reescribir documentos formales ni respuestas vacías
-        if state.get("pdf_base64") or not response.strip():
+        if not response.strip():
             return {}
+
+        # Para documentos PDF: no revisar tono pero sí guardar en historial
+        if state.get("pdf_base64"):
+            return {"conversation_history": [AIMessage(content=response)]}
 
         intent = state.get("intent") or "general"
         user_message = (state.get("user_message") or "")[:300]
@@ -50,10 +55,14 @@ def make_tone_review_node(llm_client: ILlmClient):
             revised = await llm_client.generate(prompt, "")
             revised = revised.strip()
             if revised:
-                return {"response": revised}
+                return {
+                    "response": revised,
+                    "conversation_history": [AIMessage(content=revised)],
+                }
         except Exception:
             pass
 
-        return {}
+        # Fallback: guardar la respuesta original sin revisión
+        return {"conversation_history": [AIMessage(content=response)]}
 
     return tone_review

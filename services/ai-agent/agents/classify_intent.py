@@ -4,7 +4,8 @@ from agents.state import AgentState
 from src.domain.ports.i_llm_client import ILlmClient
 from src.domain.value_objects.agent_intent import AgentIntent
 
-_SYSTEM_PROMPT = """Clasifica la intención del mensaje de un usuario joven peruano.
+_SYSTEM_PROMPT = """Clasifica la intención del ÚLTIMO mensaje de un usuario joven peruano.
+Usa el contexto de los mensajes anteriores para interpretar preguntas como "¿y qué más?", "continúa", "explícame eso", "¿cómo lo hago?".
 Responde con UNA SOLA PALABRA de esta lista: onboarding, menu, legal, estratega, oportunidades, red, redactor, general
 
 Ejemplos:
@@ -15,7 +16,9 @@ Ejemplos:
 "¿hay organizaciones en mi zona?" → red
 "¿cómo planteo mi queja a la municipalidad?" → estratega
 "¿qué es el ODS 16?" → general
-"hola" / "buenas" / "¿en qué me ayudas?" → menu"""
+"hola" / "buenas" / "¿en qué me ayudas?" → menu
+"¿y qué más puedo hacer?" (luego de hablar de estrategia) → estratega
+"¿cómo lo presento?" (luego de hablar de un documento) → redactor"""
 
 _VALID_INTENTS = {i.value for i in AgentIntent}
 
@@ -93,9 +96,10 @@ def make_classify_intent_node(llm_client: ILlmClient):
         if _is_saludo(msg) or _wants_menu(msg):
             return {"intent": AgentIntent.MENU.value}
 
-        # 6. Clasificación por LLM
+        # 6. Clasificación por LLM — con contexto de los últimos 4 mensajes
+        history_tail = state.get("conversation_history", [])[-4:]
         try:
-            raw = await llm_client.generate(_SYSTEM_PROMPT, state["user_message"])
+            raw = await llm_client.generate_with_history(_SYSTEM_PROMPT, history_tail)
             intent = raw.strip().lower()
             if intent not in _VALID_INTENTS:
                 intent = AgentIntent.GENERAL.value

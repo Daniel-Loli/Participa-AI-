@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import json
 
-from langchain_core.messages import AIMessage
-
 from agents.menu_node import MAIN_MENU
 from agents.state import AgentState
 from src.domain.ports.i_llm_client import ILlmClient
@@ -115,7 +113,6 @@ def make_onboarding_node(llm_client: ILlmClient):
         return {
             "response": response,
             "user_profile": profile,
-            "conversation_history": [AIMessage(content=response)],
         }
 
     return onboarding

@@ -4,8 +4,7 @@ import json
 from datetime import date
 from pathlib import Path
 
-from langchain_core.messages import AIMessage
-
+from agents.history import trim_history
 from agents.pdf_generator import letter_to_base64
 from agents.state import AgentState
 from agents.wa_format import WA_RULES
@@ -82,7 +81,6 @@ def make_redactor_node(llm_client: ILlmClient, data_dir=None):
             return {
                 "response": response,
                 "user_profile": profile,
-                "conversation_history": [AIMessage(content=response)],
             }
 
         # Confirmación recibida: generar el documento
@@ -101,7 +99,7 @@ def make_redactor_node(llm_client: ILlmClient, data_dir=None):
             issue=profile.get("issue", "problemática ciudadana"),
             wa_rules=WA_RULES,
         )
-        response = await llm_client.generate_with_history(system_prompt, state["conversation_history"])
+        response = await llm_client.generate_with_history(system_prompt, trim_history(state["conversation_history"]))
 
         # Añadir menú de próximos pasos al final
         response_with_menu = response + _POST_DOC_MSG
@@ -120,7 +118,6 @@ def make_redactor_node(llm_client: ILlmClient, data_dir=None):
             "response": response_with_menu,
             "tool_data": {"municipio": municipio, "tipo_documento": doc_type},
             "user_profile": profile,
-            "conversation_history": [AIMessage(content=response_with_menu)],
             "pdf_base64": pdf_b64,
             "pdf_filename": pdf_filename,
         }
