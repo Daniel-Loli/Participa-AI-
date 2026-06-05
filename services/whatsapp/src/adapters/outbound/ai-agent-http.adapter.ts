@@ -10,7 +10,7 @@ export class AiAgentHttpAdapter implements IAiAgentClient {
   }
 
   async processText(payload: TextAgentPayload): Promise<AgentResponse> {
-    return this.post(payload, 30_000);
+    return this.post(payload, 60_000);
   }
 
   async processAudio(payload: AudioAgentPayload): Promise<AgentResponse> {

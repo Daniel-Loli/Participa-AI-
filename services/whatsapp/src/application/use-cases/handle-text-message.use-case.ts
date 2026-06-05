@@ -2,18 +2,21 @@ import { createHash } from 'crypto';
 import { Injectable, Inject } from '@nestjs/common';
 import { IAiAgentClient } from '../../domain/ports/ai-agent.port';
 import { IMessageSender } from '../../domain/ports/message-sender.port';
+import { ISessionActivity } from '../../domain/ports/session-activity.port';
 import { Message } from '../../domain/entities/message.entity';
 import { AgentTimeoutError } from '../errors/agent.errors';
 import { INJECTION_TOKENS } from '../../injection-tokens';
 import { sendInParts } from '../utils/message-splitter';
 
-const WAIT_MESSAGE = 'Estoy procesando tu mensaje, en un momento te respondo 🙏';
+const RETRY_MESSAGE =
+  'Tuve un problema al procesar tu mensaje. Por favor escríbeme de nuevo para continuar.';
 
 @Injectable()
 export class HandleTextMessageUseCase {
   constructor(
     @Inject(INJECTION_TOKENS.AI_AGENT) private readonly aiAgent: IAiAgentClient,
     @Inject(INJECTION_TOKENS.MESSAGE_SENDER) private readonly sender: IMessageSender,
+    @Inject(INJECTION_TOKENS.SESSION_ACTIVITY) private readonly sessionActivity: ISessionActivity,
   ) {}
 
   async execute(message: Message): Promise<void> {
@@ -49,7 +52,6 @@ export class HandleTextMessageUseCase {
           message_type: 'text',
           status: 'timeout',
         });
-        await this.sender.sendText(message.from, WAIT_MESSAGE);
       } else {
         console.error('[HandleTextMessageUseCase] Error inesperado', {
           from_hash: fromHash,
@@ -57,6 +59,9 @@ export class HandleTextMessageUseCase {
           status: 'error',
         });
       }
+      await this.sender.sendText(message.from, RETRY_MESSAGE);
+      // Refresca el timer de inactividad para que la sesión no cierre mientras el usuario reintenta
+      await this.sessionActivity.updateLastActivity(message.sessionId).catch(() => {});
     }
   }
 }
