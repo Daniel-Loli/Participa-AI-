@@ -5,7 +5,8 @@ import re
 WA_RULES = """
 FORMATO WHATSAPP (obligatorio):
 - Usa *negrita* con UN solo asterisco para destacar lo importante
-- Listas: numera con 1. 2. 3. o usa guion - (sin asteriscos ni #)
+- Listas informativas: usa guion - (sin asteriscos ni #)
+- NUNCA uses listas numeradas (1. 2. 3.) como opciones de navegación — eso confunde el flujo. Solo el menú principal del sistema puede tener números. Si necesitas dar opciones, descríbelas en texto natural.
 - NUNCA uses ### ## # ni markdown de headers
 - NUNCA uses ** doble asterisco
 - Máximo 3-4 puntos por respuesta — si hay más, pregunta si quiere continuar

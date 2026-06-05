@@ -39,6 +39,15 @@ MAIN_MENU_MAP = {
     "5": AgentIntent.RED.value,
 }
 
+# Traducción del número al texto real de la intención (para que el nodo sepa qué quiere el usuario)
+_MAIN_MENU_TEXT = {
+    "1": "Quiero conocer mis derechos y las leyes que me protegen",
+    "2": "Quiero saber qué acciones concretas puedo tomar en mi comunidad",
+    "3": "Quiero redactar una carta o solicitud formal",
+    "4": "Quiero ver oportunidades de participación en mi distrito",
+    "5": "Quiero conectar con organizaciones juveniles en mi zona",
+}
+
 # Menú post-documento (3 opciones)
 _POST_DOC_MAP = {
     "1": AgentIntent.ESTRATEGA.value,
@@ -89,8 +98,12 @@ def make_classify_intent_node(llm_client: ILlmClient):
                 return {"intent": AgentIntent.REDACTOR.value, "doc_confirmed": True}
 
         # 4. Selección numerada del menú principal (1-5)
+        # Se traduce el número a texto para que el nodo destino entienda la intención real
         if msg in MAIN_MENU_MAP:
-            return {"intent": MAIN_MENU_MAP[msg]}
+            return {
+                "intent": MAIN_MENU_MAP[msg],
+                "user_message": _MAIN_MENU_TEXT[msg],
+            }
 
         # 5. Saludo corto o solicitud de menú → mostrar menú principal
         if _is_saludo(msg) or _wants_menu(msg):
