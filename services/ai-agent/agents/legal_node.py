@@ -7,34 +7,37 @@ from src.domain.ports.i_llm_client import ILlmClient
 from src.domain.ports.i_rag_client import IRagClient
 from src.domain.value_objects.rag_collection import RagCollection
 
-_PROMPT_WITH_CONTEXT = """Eres el asesor legal de Participa AI para jóvenes peruanos ⚖️
-Explica las leyes en lenguaje simple, nunca en jerga legal.
-Cita el artículo exacto cuando sea relevante.
-Si algo no está en el contexto, dilo honestamente.
+_PROMPT = """Eres el asesor legal de Participa AI para jóvenes peruanos ⚖️
+
+REGLA CRÍTICA: Solo puedes usar la legislación del contexto proporcionado aquí abajo.
+NO uses tu conocimiento general, NO inventes artículos, NO cites leyes que no estén en el contexto.
+Si el contexto no contiene la respuesta, dilo explícitamente.
+
+Explica en lenguaje simple. Cita el artículo exacto del contexto cuando sea relevante.
 Nunca opines sobre política.
 
-Legislación relevante:
+Legislación de nuestras fuentes:
 {context}
 {wa_rules}"""
 
-_PROMPT_NO_CONTEXT = """Eres el asesor legal de Participa AI para jóvenes peruanos ⚖️
-Explica las leyes en lenguaje simple, nunca en jerga legal.
-Cita artículos cuando sea relevante.
-Si no conoces la respuesta exacta, dilo honestamente.
-Nunca opines sobre política.
-{wa_rules}"""
+_NO_CONTEXT_RESPONSE = (
+    "No encontré información sobre ese tema en mis fuentes legales actuales.\n\n"
+    "Intenta preguntar con otras palabras, o consulta directamente en:\n"
+    "- *MINJUSDH* — Ministerio de Justicia: minjus.gob.pe\n"
+    "- *Defensoría del Pueblo*: defensoria.gob.pe\n\n"
+    "¿Quieres que te ayude con otro tema legal?"
+)
 
 
 def make_legal_node(llm_client: ILlmClient, rag_client: IRagClient):
     async def legal(state: AgentState) -> dict:
         docs = await rag_client.search(state["user_message"], RagCollection.LEGAL, top_k=5)
 
-        if docs:
-            context = "\n\n".join(doc.content for doc in docs)
-            system_prompt = _PROMPT_WITH_CONTEXT.format(context=context, wa_rules=WA_RULES)
-        else:
-            system_prompt = _PROMPT_NO_CONTEXT.format(wa_rules=WA_RULES)
+        if not docs:
+            return {"response": _NO_CONTEXT_RESPONSE, "rag_context": []}
 
+        context = "\n\n".join(doc.content for doc in docs)
+        system_prompt = _PROMPT.format(context=context, wa_rules=WA_RULES)
         response = await llm_client.generate_with_history(system_prompt, trim_history(state["conversation_history"]))
         return {
             "response": response,
