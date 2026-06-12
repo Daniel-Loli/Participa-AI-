@@ -43,6 +43,27 @@ describe('WhatsAppApiAdapter', () => {
     });
   });
 
+  // ── sendTypingIndicator() ───────────────────────────────────────────────────
+
+  describe('sendTypingIndicator()', () => {
+    it('hace POST marcando el mensaje como leído con typing_indicator', async () => {
+      const postSpy = jest.spyOn(axios, 'post').mockResolvedValueOnce({ data: {} });
+
+      await adapter.sendTypingIndicator('wamid.ABC123');
+
+      expect(postSpy).toHaveBeenCalledWith(
+        `${BASE}/${PHONE_ID}/messages`,
+        {
+          messaging_product: 'whatsapp',
+          status: 'read',
+          message_id: 'wamid.ABC123',
+          typing_indicator: { type: 'text' },
+        },
+        expect.objectContaining({ headers: AUTH }),
+      );
+    });
+  });
+
   // ── downloadAudio() ─────────────────────────────────────────────────────────
 
   describe('downloadAudio()', () => {

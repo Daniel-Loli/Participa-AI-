@@ -1,4 +1,4 @@
-import { HandleTextMessageUseCase } from '../../src/application/use-cases/handle-text-message.use-case';
+﻿import { HandleTextMessageUseCase } from '../../src/application/use-cases/handle-text-message.use-case';
 import { AgentTimeoutError } from '../../src/application/errors/agent.errors';
 import { Message } from '../../src/domain/entities/message.entity';
 import { MessageType } from '../../src/domain/value-objects/message-type.vo';
@@ -31,6 +31,7 @@ describe('HandleTextMessageUseCase', () => {
       sendText: jest.fn().mockResolvedValue(undefined),
       sendAudio: jest.fn().mockResolvedValue(undefined),
       sendDocument: jest.fn().mockResolvedValue(undefined),
+      sendTypingIndicator: jest.fn().mockResolvedValue(undefined),
     };
     sessionActivity = {
       updateLastActivity: jest.fn().mockResolvedValue(undefined),

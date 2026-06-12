@@ -62,11 +62,17 @@ export class MessageDispatcher {
 
     switch (message.type) {
       case MessageType.TEXT:
-        await this.handleText.execute(message);
+      case MessageType.AUDIO: {
+        // "Escribiendo…" + check de leído mientras el agente procesa.
+        // Fire-and-forget: no bloquea ni rompe el flujo si Meta lo rechaza
+        this.sender.sendTypingIndicator(message.messageId).catch(() => {});
+        if (message.type === MessageType.TEXT) {
+          await this.handleText.execute(message);
+        } else {
+          await this.handleAudio.execute(message);
+        }
         break;
-      case MessageType.AUDIO:
-        await this.handleAudio.execute(message);
-        break;
+      }
       default:
         await this.sender.sendText(message.from, UNSUPPORTED_MESSAGE_TEXT);
     }

@@ -31,6 +31,23 @@ export class WhatsAppApiAdapter implements IMessageSender, IMediaDownloader {
     }
   }
 
+  async sendTypingIndicator(messageId: string): Promise<void> {
+    try {
+      await axios.post(
+        `${META_BASE_URL}/${this.phoneNumberId}/messages`,
+        {
+          messaging_product: 'whatsapp',
+          status: 'read',
+          message_id: messageId,
+          typing_indicator: { type: 'text' },
+        },
+        { headers: this.authHeaders },
+      );
+    } catch (error) {
+      throw this.wrapError(error, 'sendTypingIndicator');
+    }
+  }
+
   async downloadAudio(mediaId: string): Promise<{ buffer: Buffer; mimeType: string }> {
     try {
       // Paso 1: obtener URL de descarga desde metadata

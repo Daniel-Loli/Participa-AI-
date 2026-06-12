@@ -9,7 +9,12 @@ describe('MessageDispatcher', () => {
   let handleText: jest.Mocked<Pick<HandleTextMessageUseCase, 'execute'>>;
   let handleAudio: jest.Mocked<Pick<HandleAudioMessageUseCase, 'execute'>>;
   let updateActivity: jest.Mocked<Pick<UpdateSessionActivityUseCase, 'execute'>>;
-  let sender: { sendText: jest.Mock; sendAudio: jest.Mock; sendDocument: jest.Mock };
+  let sender: {
+    sendText: jest.Mock;
+    sendAudio: jest.Mock;
+    sendDocument: jest.Mock;
+    sendTypingIndicator: jest.Mock;
+  };
 
   function buildPayload(overrides: {
     id?: string;
@@ -51,6 +56,7 @@ describe('MessageDispatcher', () => {
       sendText: jest.fn().mockResolvedValue(undefined),
       sendAudio: jest.fn().mockResolvedValue(undefined),
       sendDocument: jest.fn().mockResolvedValue(undefined),
+      sendTypingIndicator: jest.fn().mockResolvedValue(undefined),
     };
     dispatcher = new MessageDispatcher(
       handleText as unknown as HandleTextMessageUseCase,
@@ -98,6 +104,35 @@ describe('MessageDispatcher', () => {
     );
     expect(handleText.execute).not.toHaveBeenCalled();
     expect(handleAudio.execute).not.toHaveBeenCalled();
+  });
+
+  it('mensaje de texto → envía typing indicator con el message_id entrante', async () => {
+    await dispatcher.dispatch(buildPayload({ id: 'txt-typing', type: 'text' }));
+
+    expect(sender.sendTypingIndicator).toHaveBeenCalledTimes(1);
+    expect(sender.sendTypingIndicator).toHaveBeenCalledWith('txt-typing');
+  });
+
+  it('mensaje de audio → envía typing indicator', async () => {
+    await dispatcher.dispatch(
+      buildPayload({ id: 'aud-typing', type: 'audio', audio: { id: 'media-x', mime_type: 'audio/ogg' } }),
+    );
+
+    expect(sender.sendTypingIndicator).toHaveBeenCalledWith('aud-typing');
+  });
+
+  it('tipo no soportado → NO envía typing indicator', async () => {
+    await dispatcher.dispatch(buildPayload({ id: 'img-typing', type: 'image' }));
+
+    expect(sender.sendTypingIndicator).not.toHaveBeenCalled();
+  });
+
+  it('typing indicator falla → el mensaje se procesa igual', async () => {
+    sender.sendTypingIndicator.mockRejectedValue(new Error('Meta API error'));
+
+    await dispatcher.dispatch(buildPayload({ id: 'typing-fail', type: 'text' }));
+
+    expect(handleText.execute).toHaveBeenCalledTimes(1);
   });
 
   it('message_id duplicado → no llama ningún use case la segunda vez', async () => {
