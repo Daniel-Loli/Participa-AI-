@@ -69,6 +69,21 @@ _POST_DOC_TEXT = {
     "3": "Quiero consultar otro tema de participación ciudadana",
 }
 
+# Intenciones a las que se puede "volver" cuando el usuario acepta una oferta del bot
+# con un "sí" suelto (el nodo anterior tiene el contexto para continuar)
+_CONTINUABLE_INTENTS = {
+    AgentIntent.LEGAL.value,
+    AgentIntent.LEGAL_REDACTOR.value,
+    AgentIntent.ESTRATEGA.value,
+    AgentIntent.OPORTUNIDADES.value,
+    AgentIntent.RED.value,
+    AgentIntent.REDACTOR.value,
+    AgentIntent.GENERAL.value,
+}
+
+# Frases cortas de continuación que no contienen una palabra afirmativa suelta
+_CONTINUACION_FRASES = {"a ver", "aver", "ya", "va", "de una", "porfa", "por favor"}
+
 # Saludos cortos → mostrar menú (comparación por palabra completa, no substring)
 _SALUDOS = {"hola", "buenas", "buenos", "hey", "hi", "ola", "saludos"}
 _MENU_TRIGGERS = {"ayudarme", "ayudarte", "qué puedes", "que puedes",
@@ -101,6 +116,17 @@ def _is_afirmativo(message: str) -> bool:
 
 def _is_negativo(message: str) -> bool:
     return bool(_tokens(message) & _NEGATIVO)
+
+
+def _is_continuacion(message: str) -> bool:
+    """Afirmación corta sin contenido propio ("sí", "dale", "a ver"): el usuario
+    está aceptando la última oferta del bot, no pidiendo un tema nuevo."""
+    if len(message.split()) > 4:
+        return False
+    if message.lower().strip() in _CONTINUACION_FRASES:
+        return True
+    # "1" se excluye: como mensaje suelto es una selección de menú, no un "sí"
+    return bool(_tokens(message) & (_AFIRMATIVO - {"1"}))
 
 
 def _rewrite_last_human_message(state: AgentState, new_text: str) -> list:
@@ -173,6 +199,14 @@ def make_classify_intent_node(llm_client: ILlmClient):
         # 5. Saludo corto o solicitud de menú → mostrar menú principal
         if _is_saludo(msg) or _wants_menu(msg):
             return {"intent": AgentIntent.MENU.value, "user_profile": profile}
+
+        # 5b. Continuación afirmativa: el bot cerró su último turno con una oferta
+        # ("¿quieres que te ayude a...?") y el usuario aceptó con un "sí" suelto.
+        # Volver al nodo anterior — que tiene el contexto — en vez del clasificador LLM,
+        # que con un "sí" sin contenido tiende a resetear al menú.
+        last_intent = profile.get("last_intent")
+        if last_intent in _CONTINUABLE_INTENTS and _is_continuacion(msg):
+            return {"intent": last_intent, "user_profile": profile}
 
         # 6. Clasificación por LLM — con contexto de los últimos 4 mensajes
         history_tail = state.get("conversation_history", [])[-4:]

@@ -198,6 +198,65 @@ class TestMenuPostDocumento:
         assert result["user_profile"]["awaiting_next_action"] is False
 
 
+class TestContinuacionAfirmativa:
+    """Un "sí" suelto tras una oferta del bot debe volver al nodo anterior,
+    no al clasificador LLM (que tiende a resetear al menú)."""
+
+    def _profile(self, last_intent="estratega"):
+        return {**_FULL_PROFILE, "last_intent": last_intent}
+
+    async def test_si_suelto_vuelve_al_nodo_anterior_sin_llm(self):
+        mock_llm = make_llm()
+        node = make_classify_intent_node(mock_llm)
+        result = await node(make_state(user_message="Si", user_profile=self._profile()))
+        assert result["intent"] == "estratega"
+        mock_llm.generate_with_history.assert_not_called()
+
+    async def test_a_ver_continua_con_el_nodo_anterior(self):
+        node = make_classify_intent_node(make_llm())
+        result = await node(make_state(user_message="A ver", user_profile=self._profile("general")))
+        assert result["intent"] == "general"
+
+    async def test_dale_continua_con_red(self):
+        node = make_classify_intent_node(make_llm())
+        result = await node(make_state(user_message="dale", user_profile=self._profile("red")))
+        assert result["intent"] == "red"
+
+    async def test_si_sin_last_intent_clasifica_con_llm(self):
+        mock_llm = make_llm("general")
+        node = make_classify_intent_node(mock_llm)
+        result = await node(make_state(user_message="sí", user_profile=dict(_FULL_PROFILE)))
+        assert result["intent"] == "general"
+        mock_llm.generate_with_history.assert_called_once()
+
+    async def test_numero_de_menu_gana_sobre_continuacion(self):
+        # "1" como mensaje suelto es selección de menú, no un "sí"
+        node = make_classify_intent_node(make_llm())
+        result = await node(make_state(user_message="1", user_profile=self._profile()))
+        assert result["intent"] == "legal"
+
+    async def test_mensaje_largo_con_si_no_es_continuacion(self):
+        # "sí, pero cuéntame sobre las leyes de presupuesto" tiene contenido propio → LLM
+        mock_llm = make_llm("legal")
+        node = make_classify_intent_node(mock_llm)
+        result = await node(make_state(
+            user_message="sí, pero mejor cuéntame sobre las leyes de presupuesto",
+            user_profile=self._profile(),
+        ))
+        assert result["intent"] == "legal"
+        mock_llm.generate_with_history.assert_called_once()
+
+    async def test_confirmacion_de_documento_tiene_prioridad(self):
+        # awaiting_doc_confirmation gana sobre la continuación genérica
+        node = make_classify_intent_node(make_llm())
+        result = await node(make_state(
+            user_message="sí",
+            user_profile={**self._profile(), "awaiting_doc_confirmation": True},
+        ))
+        assert result["intent"] == "redactor"
+        assert result["doc_confirmed"] is True
+
+
 class TestIntencionCompuesta:
     async def test_ley_mas_carta_activa_legal_redactor(self):
         node = make_classify_intent_node(make_llm("legal"))

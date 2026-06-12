@@ -89,3 +89,35 @@ class TestRedNode:
         node = make_red_node(mock_llm, make_rag(), data_dir=str(tmp_path))
         result = await node(make_state())
         assert result["response"] == "Aquí tienes las organizaciones."
+
+    async def test_distrito_lima_metro_prioriza_orgs_de_region_lima(self, tmp_path):
+        # Usuario de SMP (sin orgs locales): el relleno debe priorizar región Lima,
+        # no el orden del archivo (que empieza en Amazonas)
+        directorio = [
+            {"nombre": "Org Amazonas", "distrito": "Chachapoyas", "region": "Amazonas",
+             "area": "cultura", "contacto": "a@org.pe"},
+            {"nombre": "Org Cusco", "distrito": "Cusco", "region": "Cusco",
+             "area": "salud", "contacto": "c@org.pe"},
+            {"nombre": "Org Comas", "distrito": "Comas", "region": "Lima",
+             "area": "deporte", "contacto": "l@org.pe"},
+            {"nombre": "Org Callao", "distrito": "Callao", "region": "Callao",
+             "area": "ambiente", "contacto": "ca@org.pe"},
+        ]
+        municipios = [{"distrito": "San Martín de Porres"}, {"distrito": "Comas"}]
+        (tmp_path / "directorio.json").write_text(json.dumps(directorio), encoding="utf-8")
+        (tmp_path / "municipios.json").write_text(json.dumps(municipios), encoding="utf-8")
+        node = make_red_node(make_llm(), make_rag(), data_dir=str(tmp_path))
+        # Sin tilde a propósito: la comparación debe tolerar "San Martin de Porres"
+        result = await node(make_state(user_profile={"district": "San Martin de Porres"}))
+        nombres = [o["nombre"] for o in result["tool_data"]["organizaciones"]]
+        assert nombres[:2] == ["Org Comas", "Org Callao"]
+
+    async def test_prompt_incluye_distrito_de_cada_org(self, tmp_path):
+        (tmp_path / "directorio.json").write_text(json.dumps(_DIRECTORIO), encoding="utf-8")
+        mock_llm = make_llm()
+        node = make_red_node(mock_llm, make_rag(), data_dir=str(tmp_path))
+        await node(make_state(user_profile={"district": "Miraflores"}))
+        system_prompt = mock_llm.generate_with_history.call_args[0][0]
+        assert "Miraflores" in system_prompt
+        # Cada línea de organización lleva su distrito para que el LLM no asuma cobertura
+        assert "Colectivo Verde" in system_prompt and "Miraflores," in system_prompt

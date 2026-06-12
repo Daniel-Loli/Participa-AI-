@@ -4,10 +4,11 @@ import json
 from datetime import date
 from pathlib import Path
 
+from langchain_core.messages import AIMessage
+
 from agents.history import trim_history
 from agents.pdf_generator import letter_to_base64
 from agents.state import AgentState
-from agents.wa_format import WA_RULES
 from src.domain.ports.i_llm_client import ILlmClient
 
 _DEFAULT_DATA_DIR = Path(__file__).parent.parent / "data"
@@ -19,17 +20,21 @@ _DOC_KEYWORDS: dict[str, list[str]] = {
     "inscripcion": ["inscripción", "inscripcion", "mesa"],
 }
 
-_SYSTEM_PROMPT = """Eres el redactor de Participa AI ✍️
-Genera {tipo_documento} formal y efectiva en español peruano.
+_SYSTEM_PROMPT = """Eres el redactor de Participa AI.
+Genera {tipo_documento} formal y efectiva en español peruano, lista para imprimir y presentar en mesa de partes.
 Remitente: {nombre}, vecino/a de {distrito}.
-Destinatario: {funcionario} ({cargo}) — {municipio}
+Destinatario: {destinatario}
 Mesa de partes: {mesa_partes}
 Fecha: {fecha}
 Problemática: {issue}
 
 Estructura: encabezado formal → exposición del problema (2-3 líneas) → petición concreta → cierre → firma.
 Sin relleno, sin repetición. Directo y respetuoso.
-{wa_rules}"""
+
+Es un DOCUMENTO FORMAL, no un mensaje de chat:
+- SIN emojis, SIN asteriscos ni markdown, SIN preguntas al lector.
+- Usa los datos reales de la conversación (qué pide el usuario y por qué).
+- Devuelve SOLO el texto del documento, sin comentarios antes ni después."""
 
 _CONFIRM_MSG = (
     "Antes de generarla, confirma 👇\n\n"
@@ -102,26 +107,36 @@ def make_redactor_node(llm_client: ILlmClient, data_dir=None):
         profile["pending_doc_type"] = None
         municipio = _load_municipio(_data_dir, profile.get("district"))
 
+        municipio_nombre = municipio.get("municipio") or (
+            f"Municipalidad de {profile.get('district', 'su distrito')}"
+        )
+        # Solo usar nombre de funcionario si viene de datos (fuente oficial); sin él,
+        # el destinatario va por cargo — práctica formal válida que nunca caduca
+        if municipio.get("funcionario"):
+            destinatario = (
+                f"{municipio['funcionario']} ({municipio.get('cargo', 'Alcalde/sa')}) — {municipio_nombre}"
+            )
+        else:
+            destinatario = f"Señor/a Alcalde/sa de la {municipio_nombre}"
+        mesa_partes = municipio.get("mesa_partes") or (
+            f"Mesa de Partes de la {municipio_nombre}"
+            + (f" (consultar dirección en {municipio['web']})" if municipio.get("web") else "")
+        )
+
         system_prompt = _SYSTEM_PROMPT.format(
             tipo_documento=doc_type,
             nombre=profile.get("name", "Ciudadano/a"),
             distrito=profile.get("district", "Lima"),
-            funcionario=municipio.get("funcionario", "Señor/a Alcalde/sa"),
-            cargo=municipio.get("cargo", "Alcalde/sa"),
-            municipio=municipio.get("municipio", "Municipalidad"),
-            mesa_partes=municipio.get("mesa_partes", "Mesa de Partes Municipal"),
+            destinatario=destinatario,
+            mesa_partes=mesa_partes,
             fecha=_fecha_es(date.today()),
             issue=profile.get("issue", "problemática ciudadana"),
-            wa_rules=WA_RULES,
         )
-        response = await llm_client.generate_with_history(system_prompt, trim_history(state["conversation_history"]))
-
-        # Añadir menú de próximos pasos al final
-        response_with_menu = response + _POST_DOC_MSG
+        letter = await llm_client.generate_with_history(system_prompt, trim_history(state["conversation_history"]))
         profile["awaiting_next_action"] = True
 
         pdf_b64 = letter_to_base64(
-            response,
+            letter,
             doc_type,
             profile.get("name", "Ciudadano"),
             profile.get("district", "Lima"),
@@ -129,12 +144,22 @@ def make_redactor_node(llm_client: ILlmClient, data_dir=None):
         safe_district = (profile.get("district") or "Lima").lower().replace(" ", "_")
         pdf_filename = f"{doc_type}_{safe_district}_{date.today().strftime('%Y%m%d')}.pdf"
 
+        # En el chat va solo un mensaje breve + menú de próximos pasos: la carta completa
+        # llega como PDF (mandarla también como texto duplicaba el contenido en burbujas)
+        chat_msg = (
+            f"¡Tu *{doc_type}* está lista! 📄 Te la envío como PDF, "
+            f"lista para presentar en {municipio.get('mesa_partes', 'la mesa de partes de tu municipalidad')}."
+            + _POST_DOC_MSG
+        )
+
         return {
-            "response": response_with_menu,
+            "response": chat_msg,
             "tool_data": {"municipio": municipio, "tipo_documento": doc_type},
             "user_profile": profile,
             "pdf_base64": pdf_b64,
             "pdf_filename": pdf_filename,
+            # Guardar la carta en el historial para que "cambia el segundo párrafo" funcione
+            "conversation_history": [AIMessage(content=letter)],
         }
 
     return redactor

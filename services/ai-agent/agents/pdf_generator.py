@@ -24,6 +24,9 @@ def _strip_wa_markdown(text: str) -> str:
     text = re.sub(r"\*(.+?)\*", r"\1", text)
     text = re.sub(r"__(.+?)__", r"\1", text)
     text = re.sub(r"_(.+?)_", r"\1", text)
+    # Helvetica solo cubre latin-1: emojis u otros símbolos fuera de ese rango
+    # se renderizan como cuadros negros en el PDF — eliminarlos
+    text = text.encode("latin-1", "ignore").decode("latin-1")
     return text.strip()
 
 

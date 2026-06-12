@@ -127,7 +127,9 @@ class TestRedactorGeneracion:
         ))
         system_prompt = mock_llm.generate_with_history.call_args[0][0]
         assert "Señor/a Alcalde/sa" in system_prompt
-        assert "Documento generado." in result["response"]
+        # La carta va al PDF y al historial — el chat lleva solo el aviso + menú
+        assert result["pdf_base64"]
+        assert result["conversation_history"][0].content == "Documento generado."
 
     async def test_tipo_documento_guardado_en_tool_data(self, tmp_path):
         (tmp_path / "municipios.json").write_text("[]")
@@ -143,8 +145,29 @@ class TestRedactorGeneracion:
         mock_llm = make_llm("Carta generada exitosamente.")
         node = make_redactor_node(mock_llm, data_dir=str(tmp_path))
         result = await node(make_state(doc_confirmed=True))
-        assert "Carta generada exitosamente." in result["response"]
+        assert "¿Qué quieres hacer ahora?" in result["response"]
         assert result["user_profile"]["awaiting_next_action"] is True
+
+    async def test_carta_no_se_duplica_en_el_chat(self, tmp_path):
+        # La carta completa va solo en el PDF y el historial — no como burbujas de texto
+        (tmp_path / "municipios.json").write_text("[]")
+        mock_llm = make_llm("Estimado Alcalde, solicito mejoras en los parques.")
+        node = make_redactor_node(mock_llm, data_dir=str(tmp_path))
+        result = await node(make_state(doc_confirmed=True))
+        assert "Estimado Alcalde" not in result["response"]
+        assert result["conversation_history"][0].content == (
+            "Estimado Alcalde, solicito mejoras en los parques."
+        )
+
+    async def test_prompt_documento_formal_sin_reglas_whatsapp(self, tmp_path):
+        # El documento es formal: el prompt no debe pedir emojis ni preguntas de chat
+        (tmp_path / "municipios.json").write_text("[]")
+        mock_llm = make_llm()
+        node = make_redactor_node(mock_llm, data_dir=str(tmp_path))
+        await node(make_state(doc_confirmed=True))
+        system_prompt = mock_llm.generate_with_history.call_args[0][0]
+        assert "FORMATO WHATSAPP" not in system_prompt
+        assert "SIN emojis" in system_prompt
 
     async def test_fecha_en_espanol_sin_locale(self, tmp_path):
         # La fecha del documento debe ir en español aunque el locale sea C

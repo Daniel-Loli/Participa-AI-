@@ -21,6 +21,10 @@ REGLA CRÍTICA: Basa tu respuesta ÚNICAMENTE en los procedimientos y eventos de
 NO inventes pasos, plazos, instituciones ni contactos que no aparezcan en el contexto.
 Si el contexto no tiene suficiente información para armar una ruta concreta, dilo honestamente.
 
+REGLA DE DISTRITO: Si un evento NO es del distrito del usuario, dilo explícitamente
+(ej: "es en Miraflores, no en tu distrito") y menciona sus requisitos — NUNCA lo
+presentes como si fuera del distrito del usuario ni omitas requisitos de residencia.
+
 {profile_context}
 {calendar_context}
 {rag_context}
@@ -31,10 +35,16 @@ def _load_calendar(data_dir: Path, district: str | None = None) -> list[dict]:
     try:
         events = json.loads((data_dir / "calendar.json").read_text(encoding="utf-8"))
         today = date.today().isoformat()
-        future = [e for e in events if e.get("fecha", "") >= today]
+        future = sorted(
+            [e for e in events if e.get("fecha", "") >= today],
+            key=lambda e: e.get("fecha", ""),
+        )
         if district:
+            # Priorizar eventos del distrito; completar con otros (el prompt obliga
+            # a indicar el distrito real de cada evento)
             by_district = [e for e in future if e.get("distrito", "").lower() == district.lower()]
-            future = by_district if len(by_district) >= 3 else future
+            others = [e for e in future if e not in by_district]
+            return (by_district + others)[:3]
         return future[:3]
     except (FileNotFoundError, json.JSONDecodeError, AttributeError):
         return []
@@ -59,7 +69,12 @@ def make_estratega_node(llm_client: ILlmClient, rag_client: IRagClient, data_dir
 
         calendar_ctx = ""
         if events:
-            lines = [f"- {e.get('fecha')} | {e.get('tipo')} | {e.get('descripcion', '')}" for e in events]
+            lines = [
+                f"- {e.get('fecha')} | {e.get('titulo', e.get('tipo', ''))} | "
+                f"Distrito: {e.get('distrito', 'no especificado')} | "
+                f"Requisitos: {e.get('requisitos', 'ninguno')} | {e.get('descripcion', '')}"
+                for e in events
+            ]
             calendar_ctx = "Próximos eventos:\n" + "\n".join(lines)
 
         rag_ctx = ""

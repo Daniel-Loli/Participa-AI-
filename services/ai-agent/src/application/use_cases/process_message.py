@@ -17,6 +17,7 @@ from src.domain.ports.i_long_term_profile_store import ILongTermProfileStore
 from src.domain.ports.i_session_store import ISessionStore
 from src.domain.ports.i_stt_client import ISttClient
 from src.domain.ports.i_tts_client import ITtsClient
+from src.domain.value_objects.agent_intent import AgentIntent
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +42,9 @@ class ProcessMessageUseCase:
 
         # Capa 2: perfil de sesión (corto plazo, 24 h)
         profile_dict = await self._load_profile(message.session_id)
+        # Sin perfil de sesión = primer mensaje de una sesión nueva
+        # (el resumen de la sesión anterior solo se muestra en este caso)
+        is_new_session = not profile_dict
 
         # Capa 3: perfil de largo plazo (30 días); pre-poblamos la sesión si hay datos
         lt_profile = await self._load_lt_profile(message.session_id)
@@ -60,6 +64,7 @@ class ProcessMessageUseCase:
             "pdf_filename": None,
             "doc_confirmed": False,
             "lt_summary": lt_summary,
+            "is_new_session": is_new_session,
             "skip_tone": False,
         }
 
@@ -71,7 +76,12 @@ class ProcessMessageUseCase:
         except Exception as exc:
             raise OrchestratorError(str(exc)) from exc
 
-        final_profile = final_state.get("user_profile", {})
+        final_profile = dict(final_state.get("user_profile", {}) or {})
+        # Recordar el último nodo de contenido para enrutar un "sí" suelto de vuelta a él
+        # (menu/onboarding no se guardan: un "sí" tras ellos debe continuar el tema previo)
+        intent = final_state.get("intent")
+        if final_profile and intent and intent not in (AgentIntent.MENU.value, AgentIntent.ONBOARDING.value):
+            final_profile["last_intent"] = intent
         await self._save_profile(message.session_id, final_profile)
         await self._update_lt_profile(
             message.session_id,
@@ -184,6 +194,7 @@ class ProcessMessageUseCase:
                 awaiting_doc_confirmation=bool(profile_dict.get("awaiting_doc_confirmation", False)),
                 awaiting_next_action=bool(profile_dict.get("awaiting_next_action", False)),
                 pending_doc_type=profile_dict.get("pending_doc_type"),
+                last_intent=profile_dict.get("last_intent"),
             )
             await self._session_store.save_profile(profile)
         except Exception as exc:

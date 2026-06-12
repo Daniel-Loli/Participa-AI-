@@ -13,6 +13,7 @@ class UserProfile:
     awaiting_doc_confirmation: bool = False  # esperando que el usuario confirme generar documento
     awaiting_next_action: bool = False       # esperando selección del menú post-documento
     pending_doc_type: str | None = None      # tipo de documento pendiente de confirmación (carta, solicitud…)
+    last_intent: str | None = None           # último nodo de contenido que respondió — destino de un "sí" suelto
 
     def is_complete(self) -> bool:
         return bool(self.name and self.district)
