@@ -1,4 +1,5 @@
 import json
+from datetime import date, timedelta
 from unittest.mock import AsyncMock, MagicMock
 
 from agents.oportunidades_node import make_oportunidades_node
@@ -22,6 +23,7 @@ def make_state(**kwargs):
 def make_llm(response: str = "Hay 3 oportunidades próximas.") -> MagicMock:
     mock = MagicMock()
     mock.generate = AsyncMock(return_value=response)
+    mock.generate_with_history = AsyncMock(return_value=response)
     return mock
 
 
@@ -31,23 +33,27 @@ def make_rag() -> MagicMock:
     return mock
 
 
-# Hoy es 2026-05-24 según el contexto del sistema
+# Fechas relativas a hoy para que los tests no caduquen con el tiempo
+def _rel(dias: int) -> str:
+    return (date.today() + timedelta(days=dias)).isoformat()
+
+
 _EVENTOS = [
-    {"fecha": "2026-04-01", "tipo": "pasado", "distrito": "Lima", "descripcion": "Evento pasado 1"},
-    {"fecha": "2026-05-01", "tipo": "pasado", "distrito": "Lima", "descripcion": "Evento pasado 2"},
-    {"fecha": "2026-06-01", "tipo": "sesion", "distrito": "Lima", "descripcion": "Sesión PP"},
-    {"fecha": "2026-06-15", "tipo": "audiencia", "distrito": "Lima", "descripcion": "Audiencia pública"},
-    {"fecha": "2026-07-01", "tipo": "taller", "distrito": "Lima", "descripcion": "Taller PP"},
-    {"fecha": "2026-08-01", "tipo": "feria", "distrito": "Lima", "descripcion": "Feria juvenil"},
-    {"fecha": "2026-09-01", "tipo": "congreso", "distrito": "Lima", "descripcion": "Congreso"},
+    {"fecha": _rel(-60), "tipo": "pasado", "distrito": "Lima", "descripcion": "Evento pasado 1"},
+    {"fecha": _rel(-20), "tipo": "pasado", "distrito": "Lima", "descripcion": "Evento pasado 2"},
+    {"fecha": _rel(7), "tipo": "sesion", "distrito": "Lima", "descripcion": "Sesión PP"},
+    {"fecha": _rel(20), "tipo": "audiencia", "distrito": "Lima", "descripcion": "Audiencia pública"},
+    {"fecha": _rel(35), "tipo": "taller", "distrito": "Lima", "descripcion": "Taller PP"},
+    {"fecha": _rel(60), "tipo": "feria", "distrito": "Lima", "descripcion": "Feria juvenil"},
+    {"fecha": _rel(90), "tipo": "congreso", "distrito": "Lima", "descripcion": "Congreso"},
 ]
 
 _EVENTOS_CON_DISTRITO = [
-    {"fecha": "2026-06-01", "tipo": "sesion", "distrito": "Miraflores", "descripcion": "Sesión PP Miraflores"},
-    {"fecha": "2026-06-05", "tipo": "audiencia", "distrito": "San Isidro", "descripcion": "Audiencia SI"},
-    {"fecha": "2026-06-10", "tipo": "taller", "distrito": "Miraflores", "descripcion": "Taller Miraflores"},
-    {"fecha": "2026-07-01", "tipo": "feria", "distrito": "Lima", "descripcion": "Feria general"},
-    {"fecha": "2026-08-01", "tipo": "congreso", "distrito": "Miraflores", "descripcion": "Congreso Miraflores"},
+    {"fecha": _rel(7), "tipo": "sesion", "distrito": "Miraflores", "descripcion": "Sesión PP Miraflores"},
+    {"fecha": _rel(10), "tipo": "audiencia", "distrito": "San Isidro", "descripcion": "Audiencia SI"},
+    {"fecha": _rel(15), "tipo": "taller", "distrito": "Miraflores", "descripcion": "Taller Miraflores"},
+    {"fecha": _rel(30), "tipo": "feria", "distrito": "Lima", "descripcion": "Feria general"},
+    {"fecha": _rel(50), "tipo": "congreso", "distrito": "Miraflores", "descripcion": "Congreso Miraflores"},
 ]
 
 
@@ -65,7 +71,7 @@ class TestOportunidadesNode:
         node = make_oportunidades_node(make_llm(), make_rag(), data_dir=str(tmp_path))
         result = await node(make_state())
         for evento in result["tool_data"]["oportunidades"]:
-            assert evento["fecha"] >= "2026-05-24"
+            assert evento["fecha"] >= date.today().isoformat()
 
     async def test_sin_distrito_retorna_todos_sin_filtrar(self, tmp_path):
         (tmp_path / "calendar.json").write_text(json.dumps(_EVENTOS_CON_DISTRITO))

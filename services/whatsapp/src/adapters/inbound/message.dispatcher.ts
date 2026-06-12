@@ -41,9 +41,17 @@ export class MessageDispatcher {
   ) {}
 
   async dispatch(body: WhatsAppInboundBody): Promise<void> {
-    const raw = body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
-    if (!raw) return;
+    // Meta puede agrupar varios mensajes en un solo webhook — procesarlos todos
+    for (const entry of body?.entry ?? []) {
+      for (const change of entry?.changes ?? []) {
+        for (const raw of change?.value?.messages ?? []) {
+          await this.dispatchOne(raw);
+        }
+      }
+    }
+  }
 
+  private async dispatchOne(raw: RawMetaMessage): Promise<void> {
     if (this.isAlreadyProcessed(raw.id)) return;
     this.markAsProcessed(raw.id);
 

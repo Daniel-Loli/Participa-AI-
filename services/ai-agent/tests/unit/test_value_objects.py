@@ -31,7 +31,8 @@ class TestMessageType:
 
 class TestAgentIntent:
     def test_all_valid_values(self):
-        valid = ["onboarding", "legal", "estratega", "oportunidades", "red", "redactor", "general"]
+        valid = ["onboarding", "menu", "legal", "legal_redactor", "estratega",
+                 "oportunidades", "red", "redactor", "general"]
         for v in valid:
             assert AgentIntent(v).value == v
 
@@ -42,8 +43,8 @@ class TestAgentIntent:
         with pytest.raises(ValueError):
             AgentIntent("invalido")
 
-    def test_seven_members(self):
-        assert len(AgentIntent) == 7
+    def test_nine_members(self):
+        assert len(AgentIntent) == 9
 
     def test_values_are_strings(self):
         for member in AgentIntent:

@@ -38,8 +38,10 @@ def make_tone_review_node(llm_client: ILlmClient):
         if not response.strip():
             return {}
 
-        # Para documentos PDF: no revisar tono pero sí guardar en historial
-        if state.get("pdf_base64"):
+        # Respuestas plantilla (menús, onboarding, confirmaciones) y documentos PDF:
+        # no revisar tono (ahorra una llamada LLM y protege menús numerados),
+        # pero sí guardar en historial
+        if state.get("pdf_base64") or state.get("skip_tone"):
             return {"conversation_history": [AIMessage(content=response)]}
 
         intent = state.get("intent") or "general"

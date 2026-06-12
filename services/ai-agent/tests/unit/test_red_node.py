@@ -23,6 +23,7 @@ def make_state(**kwargs):
 def make_llm(response: str = "Te recomiendo estas organizaciones.") -> MagicMock:
     mock = MagicMock()
     mock.generate = AsyncMock(return_value=response)
+    mock.generate_with_history = AsyncMock(return_value=response)
     return mock
 
 
@@ -79,7 +80,7 @@ class TestRedNode:
         mock_llm = make_llm()
         node = make_red_node(mock_llm, make_rag(cases), data_dir=str(tmp_path))
         await node(make_state())
-        system_prompt = mock_llm.generate.call_args[0][0]
+        system_prompt = mock_llm.generate_with_history.call_args[0][0]
         assert "Jóvenes de Miraflores lograron" in system_prompt
 
     async def test_respuesta_guardada_en_response(self, tmp_path):

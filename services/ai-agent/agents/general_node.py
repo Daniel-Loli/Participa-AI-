@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+
 from agents.history import trim_history
 from agents.state import AgentState
 from agents.wa_format import WA_RULES
@@ -34,7 +36,7 @@ def make_general_node(llm_client: ILlmClient, rag_client: IRagClient):
         all_docs = ods_docs + proc_docs + casos_docs
 
         if not all_docs:
-            return {"response": _NO_CONTEXT_RESPONSE, "rag_context": []}
+            return {"response": _NO_CONTEXT_RESPONSE, "rag_context": [], "skip_tone": True}
 
         context = "Contexto de nuestras fuentes:\n" + "\n\n".join(doc.content for doc in all_docs)
         system_prompt = _SYSTEM_PROMPT.format(context=context, wa_rules=WA_RULES)
@@ -48,7 +50,10 @@ def make_general_node(llm_client: ILlmClient, rag_client: IRagClient):
 
 
 async def _fetch_rag(rag_client: IRagClient, query: str):
-    ods = await rag_client.search(query, RagCollection.ODS, top_k=3)
-    proc = await rag_client.search(query, RagCollection.PROCEDIMIENTOS, top_k=3)
-    casos = await rag_client.search(query, RagCollection.CASOS_EXITO, top_k=2)
+    # Búsquedas en paralelo — reduce la latencia total a la búsqueda más lenta
+    ods, proc, casos = await asyncio.gather(
+        rag_client.search(query, RagCollection.ODS, top_k=3),
+        rag_client.search(query, RagCollection.PROCEDIMIENTOS, top_k=3),
+        rag_client.search(query, RagCollection.CASOS_EXITO, top_k=2),
+    )
     return ods, proc, casos

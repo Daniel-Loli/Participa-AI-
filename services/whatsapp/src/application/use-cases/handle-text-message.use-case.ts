@@ -40,7 +40,8 @@ export class HandleTextMessageUseCase {
           'Tu documento listo para imprimir 📄',
         );
       } else if (response.response_type === 'audio' && response.response_audio_base64) {
-        await this.sender.sendAudio(message.from, response.response_audio_base64, 'audio/ogg');
+        // El TTS del agente genera MP3 — el mime debe coincidir para que Meta lo acepte
+        await this.sender.sendAudio(message.from, response.response_audio_base64, 'audio/mpeg');
       } else {
         await sendInParts((t) => this.sender.sendText(message.from, t), response.response_text!);
       }

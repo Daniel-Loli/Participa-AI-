@@ -5,12 +5,14 @@ import { MessageType } from '../../src/domain/value-objects/message-type.vo';
 import { IAiAgentClient, AgentResponse } from '../../src/domain/ports/ai-agent.port';
 import { IMediaDownloader } from '../../src/domain/ports/media-downloader.port';
 import { IMessageSender } from '../../src/domain/ports/message-sender.port';
+import { ISessionActivity } from '../../src/domain/ports/session-activity.port';
 
 describe('HandleAudioMessageUseCase', () => {
   let useCase: HandleAudioMessageUseCase;
   let downloader: jest.Mocked<IMediaDownloader>;
   let aiAgent: jest.Mocked<IAiAgentClient>;
   let sender: jest.Mocked<IMessageSender>;
+  let sessionActivity: jest.Mocked<ISessionActivity>;
 
   const audioMessage = new Message(
     '51999000001',
@@ -27,12 +29,24 @@ describe('HandleAudioMessageUseCase', () => {
 
   beforeEach(() => {
     downloader = { downloadAudio: jest.fn() };
-    aiAgent = { processText: jest.fn(), processAudio: jest.fn() };
+    aiAgent = {
+      processText: jest.fn(),
+      processAudio: jest.fn(),
+      deleteSession: jest.fn().mockResolvedValue(undefined),
+    };
     sender = {
       sendText: jest.fn().mockResolvedValue(undefined),
       sendAudio: jest.fn().mockResolvedValue(undefined),
+      sendDocument: jest.fn().mockResolvedValue(undefined),
     };
-    useCase = new HandleAudioMessageUseCase(downloader, aiAgent, sender);
+    sessionActivity = {
+      updateLastActivity: jest.fn().mockResolvedValue(undefined),
+      getInactiveSessions: jest.fn().mockResolvedValue([]),
+      markWarningSent: jest.fn().mockResolvedValue(undefined),
+      isWarningSent: jest.fn().mockResolvedValue(false),
+      clearActivityKeys: jest.fn().mockResolvedValue(undefined),
+    };
+    useCase = new HandleAudioMessageUseCase(downloader, aiAgent, sender, sessionActivity);
   });
 
   afterEach(() => {
@@ -68,7 +82,7 @@ describe('HandleAudioMessageUseCase', () => {
     expect(sender.sendAudio).toHaveBeenCalledWith(
       '51999000001',
       'cmVzcHVlc3RhLWF1ZGlv',
-      'audio/ogg',
+      'audio/mpeg',
     );
     expect(sender.sendText).not.toHaveBeenCalled();
   });
@@ -98,7 +112,7 @@ describe('HandleAudioMessageUseCase', () => {
     expect(sender.sendText).toHaveBeenCalledTimes(1);
     expect(sender.sendText).toHaveBeenCalledWith(
       '51999000001',
-      expect.stringContaining('Estoy procesando tu mensaje'),
+      expect.stringContaining('Tuve un problema al procesar tu mensaje'),
     );
     expect(warnSpy).toHaveBeenCalledWith(
       expect.stringContaining('Timeout'),
@@ -117,7 +131,7 @@ describe('HandleAudioMessageUseCase', () => {
     expect(sender.sendText).toHaveBeenCalledTimes(1);
     expect(sender.sendText).toHaveBeenCalledWith(
       '51999000001',
-      expect.stringContaining('Estoy procesando tu mensaje'),
+      expect.stringContaining('Tuve un problema al procesar tu mensaje'),
     );
     expect(errorSpy).toHaveBeenCalledWith(
       expect.stringContaining('Error inesperado'),

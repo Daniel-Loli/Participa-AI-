@@ -34,7 +34,7 @@ def make_legal_node(llm_client: ILlmClient, rag_client: IRagClient):
         docs = await rag_client.search(state["user_message"], RagCollection.LEGAL, top_k=5)
 
         if not docs:
-            return {"response": _NO_CONTEXT_RESPONSE, "rag_context": []}
+            return {"response": _NO_CONTEXT_RESPONSE, "rag_context": [], "skip_tone": True}
 
         context = "\n\n".join(doc.content for doc in docs)
         system_prompt = _PROMPT.format(context=context, wa_rules=WA_RULES)

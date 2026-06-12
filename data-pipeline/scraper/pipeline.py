@@ -31,7 +31,7 @@ def _ensure_collection(client: QdrantClient, collection: str) -> None:
             collection_name=collection,
             vectors_config=VectorParams(size=_VECTOR_SIZE, distance=Distance.COSINE),
         )
-        logger.info("coleccion_creada", collection=collection)
+        logger.info("Colección creada: %s", collection)
 
 
 def process_source_text(
@@ -50,7 +50,7 @@ def process_source_text(
     chunks = [c for c in splitter.split_text(text) if len(c.strip()) >= _MIN_CHUNK_LEN]
 
     if not chunks:
-        logger.warning("sin_chunks_utiles", url=source_url)
+        logger.warning("Sin chunks útiles para %s", source_url)
         return 0
 
     _ensure_collection(qdrant_client, collection)
@@ -63,7 +63,7 @@ def process_source_text(
         try:
             vectors = embeddings.embed_documents(batch)
         except Exception as exc:
-            logger.warning("error_embedding_batch", batch_index=i, error=str(exc))
+            logger.warning("Error de embedding en batch %d: %s", i, exc)
             continue
 
         points = [
@@ -86,7 +86,7 @@ def process_source_text(
             qdrant_client.upsert(collection_name=collection, points=points)
             total_uploaded += len(points)
         except Exception as exc:
-            logger.warning("error_upsert_batch", batch_index=i, error=str(exc))
+            logger.warning("Error de upsert en batch %d: %s", i, exc)
 
         time.sleep(_BATCH_SLEEP)
 

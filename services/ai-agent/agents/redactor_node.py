@@ -39,12 +39,22 @@ _CONFIRM_MSG = (
 )
 
 _POST_DOC_MSG = (
-    "\n\n---\n"
-    "¿Qué quieres hacer ahora?\n\n"
+    "\n\n¿Qué quieres hacer ahora?\n\n"
     "1. 📋 Cómo presentarla en mesa de partes\n"
     "2. 🤝 Ver organizaciones de apoyo en mi distrito\n"
     "3. 💬 Consultar otro tema"
 )
+
+
+# Nombres de meses en español — strftime("%B") depende del locale del contenedor
+_MESES = [
+    "enero", "febrero", "marzo", "abril", "mayo", "junio",
+    "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+]
+
+
+def _fecha_es(d: date) -> str:
+    return f"{d.day} de {_MESES[d.month - 1]} de {d.year}"
 
 
 def _detect_doc_type(message: str) -> str:
@@ -72,19 +82,24 @@ def make_redactor_node(llm_client: ILlmClient, data_dir=None):
 
     async def redactor(state: AgentState) -> dict:
         profile = dict(state.get("user_profile") or {})
-        doc_type = _detect_doc_type(state["user_message"])
 
         # Pedir confirmación antes de generar
         if not state.get("doc_confirmed"):
+            doc_type = _detect_doc_type(state["user_message"])
             profile["awaiting_doc_confirmation"] = True
+            profile["pending_doc_type"] = doc_type
             response = _CONFIRM_MSG.format(tipo_documento=doc_type)
             return {
                 "response": response,
                 "user_profile": profile,
+                "skip_tone": True,
             }
 
-        # Confirmación recibida: generar el documento
+        # Confirmación recibida: generar el documento.
+        # El mensaje actual es "sí"/"dale", así que el tipo viene del turno anterior.
+        doc_type = profile.get("pending_doc_type") or _detect_doc_type(state["user_message"])
         profile["awaiting_doc_confirmation"] = False
+        profile["pending_doc_type"] = None
         municipio = _load_municipio(_data_dir, profile.get("district"))
 
         system_prompt = _SYSTEM_PROMPT.format(
@@ -95,7 +110,7 @@ def make_redactor_node(llm_client: ILlmClient, data_dir=None):
             cargo=municipio.get("cargo", "Alcalde/sa"),
             municipio=municipio.get("municipio", "Municipalidad"),
             mesa_partes=municipio.get("mesa_partes", "Mesa de Partes Municipal"),
-            fecha=date.today().strftime("%d de %B de %Y"),
+            fecha=_fecha_es(date.today()),
             issue=profile.get("issue", "problemática ciudadana"),
             wa_rules=WA_RULES,
         )

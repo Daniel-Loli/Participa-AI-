@@ -69,11 +69,19 @@ def make_session_store(profile=None):
     return mock
 
 
-def make_use_case(stt=None, tts=None, session_store=None, orchestrator=None):
+def make_lt_store(profile=None):
+    mock = MagicMock()
+    mock.get_profile = AsyncMock(return_value=profile)
+    mock.save_profile = AsyncMock()
+    return mock
+
+
+def make_use_case(stt=None, tts=None, session_store=None, lt_store=None, orchestrator=None):
     return ProcessMessageUseCase(
         stt_client=stt or make_stt(),
         tts_client=tts or make_tts(),
         session_store=session_store or make_session_store(),
+        lt_store=lt_store or make_lt_store(),
         orchestrator=orchestrator or make_orchestrator(),
     )
 

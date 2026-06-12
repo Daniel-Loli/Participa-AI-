@@ -6,8 +6,10 @@
 # Documentación interna (excluye README.md público)
 *.md
 !README.md
-!CLAUDE.md
-!.claude/**
+.claude/
+
+# Dependencias
+node_modules/
 
 # OS
 .DS_Store

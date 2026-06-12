@@ -27,8 +27,11 @@ class RedisSessionAdapter(ISessionStore):
             raw = await self._redis.get(f"{_KEY_PREFIX}{session_id}")
             if raw is None:
                 return None
-            return UserProfile(**json.loads(raw))
-        except RedisError as exc:
+            data = json.loads(raw)
+            # Filtrar campos desconocidos para compatibilidad entre versiones del perfil
+            valid = {f.name for f in dataclasses.fields(UserProfile)}
+            return UserProfile(**{k: v for k, v in data.items() if k in valid})
+        except (RedisError, json.JSONDecodeError, TypeError) as exc:
             logger.warning("Redis get_profile error para session '%s': %s", session_id, exc)
             return None
 

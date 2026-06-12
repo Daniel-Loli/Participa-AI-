@@ -37,11 +37,14 @@ class TestConfigValid:
     def test_defaults_cuando_vars_opcionales_ausentes(self, monkeypatch):
         set_required(monkeypatch)
         cfg = Config(_env_file=None)
-        assert cfg.openai_model == "gpt-4o-mini"
+        assert cfg.openai_model == "gpt-4.1-mini"
+        assert cfg.openai_model_nano == "gpt-4.1-nano"
+        assert cfg.openai_model_mini == "gpt-4.1-mini"
+        assert cfg.openai_model_full == "gpt-4.1"
         assert cfg.openai_embedding_model == "text-embedding-3-small"
         assert cfg.openai_whisper_model == "whisper-1"
         assert cfg.openai_tts_model == "tts-1"
-        assert cfg.openai_tts_voice == "alloy"
+        assert cfg.openai_tts_voice == "nova"
         assert cfg.qdrant_collection_legal == "legal"
         assert cfg.qdrant_collection_ods == "ods"
         assert cfg.qdrant_collection_procedimientos == "procedimientos"

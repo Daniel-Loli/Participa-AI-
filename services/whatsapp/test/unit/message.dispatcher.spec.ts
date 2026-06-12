@@ -1,13 +1,15 @@
 import { MessageDispatcher } from '../../src/adapters/inbound/message.dispatcher';
 import { HandleTextMessageUseCase } from '../../src/application/use-cases/handle-text-message.use-case';
 import { HandleAudioMessageUseCase } from '../../src/application/use-cases/handle-audio-message.use-case';
+import { UpdateSessionActivityUseCase } from '../../src/application/use-cases/update-session-activity.use-case';
 import { Message } from '../../src/domain/entities/message.entity';
 
 describe('MessageDispatcher', () => {
   let dispatcher: MessageDispatcher;
   let handleText: jest.Mocked<Pick<HandleTextMessageUseCase, 'execute'>>;
   let handleAudio: jest.Mocked<Pick<HandleAudioMessageUseCase, 'execute'>>;
-  let sender: { sendText: jest.Mock; sendAudio: jest.Mock };
+  let updateActivity: jest.Mocked<Pick<UpdateSessionActivityUseCase, 'execute'>>;
+  let sender: { sendText: jest.Mock; sendAudio: jest.Mock; sendDocument: jest.Mock };
 
   function buildPayload(overrides: {
     id?: string;
@@ -44,13 +46,16 @@ describe('MessageDispatcher', () => {
   beforeEach(() => {
     handleText = { execute: jest.fn().mockResolvedValue(undefined) };
     handleAudio = { execute: jest.fn().mockResolvedValue(undefined) };
+    updateActivity = { execute: jest.fn().mockResolvedValue(undefined) };
     sender = {
       sendText: jest.fn().mockResolvedValue(undefined),
       sendAudio: jest.fn().mockResolvedValue(undefined),
+      sendDocument: jest.fn().mockResolvedValue(undefined),
     };
     dispatcher = new MessageDispatcher(
       handleText as unknown as HandleTextMessageUseCase,
       handleAudio as unknown as HandleAudioMessageUseCase,
+      updateActivity as unknown as UpdateSessionActivityUseCase,
       sender,
     );
   });
@@ -102,6 +107,29 @@ describe('MessageDispatcher', () => {
     await dispatcher.dispatch(payload);
 
     expect(handleText.execute).toHaveBeenCalledTimes(1);
+  });
+
+  it('varios mensajes en un solo webhook → procesa todos', async () => {
+    const payload = {
+      entry: [
+        {
+          changes: [
+            {
+              value: {
+                messages: [
+                  { id: 'multi-1', from: '51999000001', type: 'text', timestamp: '1700000000', text: { body: 'Hola' } },
+                  { id: 'multi-2', from: '51999000002', type: 'text', timestamp: '1700000001', text: { body: 'Buenas' } },
+                ],
+              },
+            },
+          ],
+        },
+      ],
+    };
+
+    await dispatcher.dispatch(payload);
+
+    expect(handleText.execute).toHaveBeenCalledTimes(2);
   });
 
   it('payload sin messages → retorna sin error', async () => {

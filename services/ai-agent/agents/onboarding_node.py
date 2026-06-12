@@ -36,6 +36,11 @@ _OPTION_MAP: dict[str, str] = {
 }
 
 
+# Mensajes que no son una problemática real (saludos, muletillas)
+_NON_ISSUE = {"hola", "buenas", "buenos días", "buenas tardes", "gracias",
+              "ok", "okay", "si", "sí", "no", "no sé", "no se", "hey"}
+
+
 def _resolve_issue(message: str) -> str | None:
     """Mapea número de opción a la problemática, o devuelve el texto libre."""
     stripped = message.strip()
@@ -44,6 +49,8 @@ def _resolve_issue(message: str) -> str | None:
     # Si eligió opción 7 u otro texto libre, usarlo directamente (sin el "7.")
     if stripped == "7":
         return None  # pedir que lo escriba
+    if stripped.lower() in _NON_ISSUE:
+        return None
     if len(stripped) > 3:
         return stripped
     return None
@@ -54,8 +61,9 @@ def make_onboarding_node(llm_client: ILlmClient):
         profile = dict(state.get("user_profile") or {})
 
         # Intentar extraer nombre y/o distrito del mensaje actual
+        had_name = bool(profile.get("name"))
         had_district = bool(profile.get("district"))
-        if not profile.get("name") or not profile.get("district"):
+        if not had_name or not had_district:
             try:
                 raw = await llm_client.generate(_EXTRACT_PROMPT, state["user_message"])
                 data = json.loads(raw)
@@ -65,7 +73,10 @@ def make_onboarding_node(llm_client: ILlmClient):
                     profile["district"] = data["distrito"]
             except Exception:
                 pass
-        just_got_district = not had_district and bool(profile.get("district"))
+        # Si el mensaje actual se usó para dar nombre o distrito, no reutilizarlo como problemática
+        just_extracted = (not had_name and bool(profile.get("name"))) or (
+            not had_district and bool(profile.get("district"))
+        )
 
         # Paso 1: pedir nombre
         if not profile.get("name"):
@@ -84,9 +95,9 @@ def make_onboarding_node(llm_client: ILlmClient):
 
         # Paso 3: pedir problemática (con menú si aún no la tiene)
         elif not profile.get("issue"):
-            # Si el distrito se acaba de extraer de ESTE mensaje, no usar el mismo
-            # mensaje para extraer el issue — mostrar el menú en el próximo turno
-            issue = None if just_got_district else _resolve_issue(state["user_message"])
+            # Si el nombre o distrito se acaba de extraer de ESTE mensaje, no usar el
+            # mismo mensaje para extraer el issue — mostrar el menú en el próximo turno
+            issue = None if just_extracted else _resolve_issue(state["user_message"])
             if issue:
                 profile["issue"] = issue
                 profile["conversation_stage"] = "ACTIVE"
@@ -102,17 +113,18 @@ def make_onboarding_node(llm_client: ILlmClient):
                     + _PROBLEM_MENU
                 )
 
-        # Ya completó el onboarding
+        # Ya completó el onboarding — mostrar el menú principal, no repetir el de problemáticas
         else:
             profile["conversation_stage"] = "ACTIVE"
             response = (
-                f"¡Perfecto! {profile['name']} de *{profile['district']}* — ya te tengo ubicado/a 📍\n\n"
-                + _PROBLEM_MENU
+                f"¡Listo, {profile['name']}! Ya tengo tus datos 📍\n\n"
+                f"¿En qué te puedo ayudar?\n\n{MAIN_MENU}"
             )
 
         return {
             "response": response,
             "user_profile": profile,
+            "skip_tone": True,
         }
 
     return onboarding

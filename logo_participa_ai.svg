@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="640" viewBox="0 0 640 640">
+  <defs>
+    <clipPath id="circle-clip">
+      <circle cx="320" cy="320" r="290"/>
+    </clipPath>
+  </defs>
+
+  <!-- Fondo azul marino -->
+  <circle cx="320" cy="320" r="290" fill="#1a3a6e"/>
+
+  <!-- Franja roja izquierda (bandera peruana) -->
+  <rect x="30" y="30" width="194" height="580" fill="#D91023" clip-path="url(#circle-clip)"/>
+
+  <!-- Franja roja derecha (bandera peruana) -->
+  <rect x="416" y="30" width="194" height="580" fill="#D91023" clip-path="url(#circle-clip)"/>
+
+  <!-- Borde exterior dorado -->
+  <circle cx="320" cy="320" r="303" fill="none" stroke="#F5C842" stroke-width="10"/>
+
+  <!-- Arco dorado conectando las tres figuras -->
+  <path d="M 218 245 Q 320 158 422 245" fill="none" stroke="#F5C842" stroke-width="5" stroke-linecap="round"/>
+
+  <!-- Punto dorado central en el arco -->
+  <circle cx="320" cy="173" r="7" fill="#F5C842"/>
+
+  <!-- Líneas doradas de conexión entre figuras -->
+  <line x1="264" y1="274" x2="296" y2="267" stroke="#F5C842" stroke-width="3" stroke-linecap="round" opacity="0.9"/>
+  <line x1="344" y1="267" x2="376" y2="274" stroke="#F5C842" stroke-width="3" stroke-linecap="round" opacity="0.9"/>
+
+  <!-- Figura izquierda -->
+  <circle cx="240" cy="232" r="22" fill="white"/>
+  <path d="M 218 260 Q 240 252 262 260 L 258 308 Q 240 315 222 308 Z" fill="white"/>
+  <line x1="220" y1="271" x2="202" y2="292" stroke="white" stroke-width="5" stroke-linecap="round"/>
+  <line x1="260" y1="271" x2="278" y2="286" stroke="white" stroke-width="5" stroke-linecap="round"/>
+  <line x1="230" y1="308" x2="224" y2="334" stroke="white" stroke-width="5" stroke-linecap="round"/>
+  <line x1="250" y1="308" x2="256" y2="334" stroke="white" stroke-width="5" stroke-linecap="round"/>
+
+  <!-- Figura central (más alta y grande) -->
+  <circle cx="320" cy="210" r="27" fill="white"/>
+  <path d="M 296 242 Q 320 232 344 242 L 340 295 Q 320 303 300 295 Z" fill="white"/>
+  <line x1="298" y1="255" x2="274" y2="277" stroke="white" stroke-width="6" stroke-linecap="round"/>
+  <line x1="342" y1="255" x2="366" y2="277" stroke="white" stroke-width="6" stroke-linecap="round"/>
+  <line x1="308" y1="295" x2="302" y2="325" stroke="white" stroke-width="6" stroke-linecap="round"/>
+  <line x1="332" y1="295" x2="338" y2="325" stroke="white" stroke-width="6" stroke-linecap="round"/>
+
+  <!-- Figura derecha -->
+  <circle cx="400" cy="232" r="22" fill="white"/>
+  <path d="M 378 260 Q 400 252 422 260 L 418 308 Q 400 315 382 308 Z" fill="white"/>
+  <line x1="380" y1="271" x2="362" y2="286" stroke="white" stroke-width="5" stroke-linecap="round"/>
+  <line x1="420" y1="271" x2="438" y2="292" stroke="white" stroke-width="5" stroke-linecap="round"/>
+  <line x1="390" y1="308" x2="384" y2="334" stroke="white" stroke-width="5" stroke-linecap="round"/>
+  <line x1="410" y1="308" x2="416" y2="334" stroke="white" stroke-width="5" stroke-linecap="round"/>
+
+  <!-- Texto PARTICIPA -->
+  <text x="320" y="386"
+        text-anchor="middle"
+        font-family="Arial Black, Arial, sans-serif"
+        font-weight="900"
+        font-size="52"
+        fill="white"
+        letter-spacing="4">PARTICIPA</text>
+
+  <!-- Línea dorada separadora -->
+  <line x1="164" y1="403" x2="476" y2="403" stroke="#F5C842" stroke-width="3"/>
+
+  <!-- Texto AI en dorado -->
+  <text x="320" y="458"
+        text-anchor="middle"
+        font-family="Arial Black, Arial, sans-serif"
+        font-weight="900"
+        font-size="62"
+        fill="#F5C842"
+        letter-spacing="14">AI</text>
+
+  <!-- Subtítulo -->
+  <text x="320" y="499"
+        text-anchor="middle"
+        font-family="Arial, sans-serif"
+        font-size="13.5"
+        fill="white"
+        letter-spacing="1.5"
+        opacity="0.9">PARTICIPACIÓN CIUDADANA JUVENIL</text>
+</svg>

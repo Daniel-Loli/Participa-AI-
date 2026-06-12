@@ -60,6 +60,7 @@ class ProcessMessageUseCase:
             "pdf_filename": None,
             "doc_confirmed": False,
             "lt_summary": lt_summary,
+            "skip_tone": False,
         }
 
         try:
@@ -182,6 +183,7 @@ class ProcessMessageUseCase:
                 conversation_stage=profile_dict.get("conversation_stage", "ONBOARDING"),
                 awaiting_doc_confirmation=bool(profile_dict.get("awaiting_doc_confirmation", False)),
                 awaiting_next_action=bool(profile_dict.get("awaiting_next_action", False)),
+                pending_doc_type=profile_dict.get("pending_doc_type"),
             )
             await self._session_store.save_profile(profile)
         except Exception as exc:

@@ -4,11 +4,13 @@ import { Message } from '../../src/domain/entities/message.entity';
 import { MessageType } from '../../src/domain/value-objects/message-type.vo';
 import { IAiAgentClient, AgentResponse } from '../../src/domain/ports/ai-agent.port';
 import { IMessageSender } from '../../src/domain/ports/message-sender.port';
+import { ISessionActivity } from '../../src/domain/ports/session-activity.port';
 
 describe('HandleTextMessageUseCase', () => {
   let useCase: HandleTextMessageUseCase;
   let aiAgent: jest.Mocked<IAiAgentClient>;
   let sender: jest.Mocked<IMessageSender>;
+  let sessionActivity: jest.Mocked<ISessionActivity>;
 
   const textMessage = new Message(
     '51999000001',
@@ -23,12 +25,21 @@ describe('HandleTextMessageUseCase', () => {
     aiAgent = {
       processText: jest.fn(),
       processAudio: jest.fn(),
+      deleteSession: jest.fn().mockResolvedValue(undefined),
     };
     sender = {
       sendText: jest.fn().mockResolvedValue(undefined),
       sendAudio: jest.fn().mockResolvedValue(undefined),
+      sendDocument: jest.fn().mockResolvedValue(undefined),
     };
-    useCase = new HandleTextMessageUseCase(aiAgent, sender);
+    sessionActivity = {
+      updateLastActivity: jest.fn().mockResolvedValue(undefined),
+      getInactiveSessions: jest.fn().mockResolvedValue([]),
+      markWarningSent: jest.fn().mockResolvedValue(undefined),
+      isWarningSent: jest.fn().mockResolvedValue(false),
+      clearActivityKeys: jest.fn().mockResolvedValue(undefined),
+    };
+    useCase = new HandleTextMessageUseCase(aiAgent, sender, sessionActivity);
   });
 
   afterEach(() => {
@@ -65,7 +76,7 @@ describe('HandleTextMessageUseCase', () => {
     expect(sender.sendAudio).toHaveBeenCalledWith(
       '51999000001',
       'dGVzdC1hdWRpby1iYXNlNjQ=',
-      'audio/ogg',
+      'audio/mpeg',
     );
     expect(sender.sendText).not.toHaveBeenCalled();
   });
@@ -79,7 +90,7 @@ describe('HandleTextMessageUseCase', () => {
     expect(sender.sendText).toHaveBeenCalledTimes(1);
     expect(sender.sendText).toHaveBeenCalledWith(
       '51999000001',
-      expect.stringContaining('Estoy procesando tu mensaje'),
+      expect.stringContaining('Tuve un problema al procesar tu mensaje'),
     );
     expect(warnSpy).toHaveBeenCalledWith(
       expect.stringContaining('Timeout'),
@@ -98,7 +109,11 @@ describe('HandleTextMessageUseCase', () => {
       expect.stringContaining('Error inesperado'),
       expect.objectContaining({ message_type: 'text', status: 'error' }),
     );
-    expect(sender.sendText).not.toHaveBeenCalled();
+    expect(sender.sendText).toHaveBeenCalledTimes(1);
+    expect(sender.sendText).toHaveBeenCalledWith(
+      '51999000001',
+      expect.stringContaining('Tuve un problema al procesar tu mensaje'),
+    );
     expect(sender.sendAudio).not.toHaveBeenCalled();
   });
 });

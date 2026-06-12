@@ -48,7 +48,7 @@ describe('AiAgentHttpAdapter', () => {
       expect(postSpy).toHaveBeenCalledWith(
         `${AGENT_URL}/agent`,
         TEXT_PAYLOAD,
-        expect.objectContaining({ timeout: 10_000 }),
+        expect.objectContaining({ timeout: 60_000 }),
       );
     });
   });
@@ -69,7 +69,7 @@ describe('AiAgentHttpAdapter', () => {
       expect(postSpy).toHaveBeenCalledWith(
         `${AGENT_URL}/agent`,
         AUDIO_PAYLOAD,
-        expect.objectContaining({ timeout: 15_000 }),
+        expect.objectContaining({ timeout: 45_000 }),
       );
     });
   });

@@ -4,6 +4,7 @@ import base64
 import io
 import re
 from datetime import date
+from xml.sax.saxutils import escape
 
 from reportlab.lib.colors import HexColor
 from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
@@ -87,8 +88,9 @@ def generate_letter_pdf(letter_text: str, doc_type: str, name: str, district: st
     paragraphs = [p.strip() for p in clean_text.split("\n\n") if p.strip()]
 
     for para in paragraphs:
-        # Preservar saltos de línea simples como <br/>
-        html_para = para.replace("\n", "<br/>")
+        # Escapar caracteres XML (&, <, >) — Paragraph parsea el texto como XML
+        # y un "&" suelto en la carta rompería la generación del PDF
+        html_para = escape(para).replace("\n", "<br/>")
         story.append(Paragraph(html_para, body_style))
 
     # Pie de página

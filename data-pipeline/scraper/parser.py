@@ -23,6 +23,13 @@ def parse_html(html: str, css_selectors: list[str]) -> str:
                 seen.add(text)
                 parts.append(text)
 
+    # Eliminar partes contenidas en otras — los selectores anidados (main > p > li)
+    # extraen el mismo texto varias veces y duplicarían chunks en Qdrant
+    parts = [
+        p for i, p in enumerate(parts)
+        if not any(i != j and len(other) > len(p) and p in other for j, other in enumerate(parts))
+    ]
+
     raw = "\n".join(parts)
     cleaned = re.sub(r"[ \t]+", " ", raw)
     cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)

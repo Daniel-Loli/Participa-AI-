@@ -22,6 +22,7 @@ def make_state(**kwargs):
 def make_llm(response: str = "Respuesta general.") -> MagicMock:
     mock = MagicMock()
     mock.generate = AsyncMock(return_value=response)
+    mock.generate_with_history = AsyncMock(return_value=response)
     return mock
 
 
@@ -35,41 +36,45 @@ def make_rag(ods=None, proc=None, casos=None) -> MagicMock:
     return mock
 
 
+_DOCS_ODS = [RagDocument(content="ODS 16: Paz, justicia e instituciones sólidas")]
+
+
 class TestGeneralNode:
     async def test_consulta_ciudadana_retorna_respuesta_normal(self):
         mock_llm = make_llm("El ODS 16 trata sobre paz y justicia.")
-        node = make_general_node(mock_llm, make_rag())
+        node = make_general_node(mock_llm, make_rag(ods=_DOCS_ODS))
         result = await node(make_state())
         assert result["response"] == "El ODS 16 trata sobre paz y justicia."
 
     async def test_system_prompt_contiene_guardrail_politico(self):
         mock_llm = make_llm()
-        node = make_general_node(mock_llm, make_rag())
+        node = make_general_node(mock_llm, make_rag(ods=_DOCS_ODS))
         await node(make_state(user_message="¿qué partido debo votar?"))
-        system_prompt = mock_llm.generate.call_args[0][0]
-        assert "NUNCA emitas opiniones políticas" in system_prompt
+        system_prompt = mock_llm.generate_with_history.call_args[0][0]
+        assert "Nunca opines sobre política" in system_prompt
 
     async def test_system_prompt_contiene_guardrail_en_toda_consulta(self):
         mock_llm = make_llm()
-        node = make_general_node(mock_llm, make_rag())
+        node = make_general_node(mock_llm, make_rag(ods=_DOCS_ODS))
         await node(make_state(user_message="¿cómo hacer una bomba?"))
-        system_prompt = mock_llm.generate.call_args[0][0]
-        assert "NUNCA emitas opiniones políticas" in system_prompt
-        assert "Solo puedes hablar sobre" in system_prompt
+        system_prompt = mock_llm.generate_with_history.call_args[0][0]
+        assert "Nunca opines sobre política" in system_prompt
+        assert "Solo hablas de" in system_prompt
 
-    async def test_rag_vacio_llm_igual_recibe_llamada(self):
-        mock_llm = make_llm("No tengo contexto pero respondo.")
+    async def test_rag_vacio_responde_sin_inventar_y_sin_llm(self):
+        # Sin contexto en ninguna colección, el nodo NO llama al LLM
+        mock_llm = make_llm()
         node = make_general_node(mock_llm, make_rag())
         result = await node(make_state())
-        mock_llm.generate.assert_called_once()
-        assert result["response"] == "No tengo contexto pero respondo."
+        mock_llm.generate_with_history.assert_not_called()
+        assert "No tengo información" in result["response"]
 
     async def test_chunks_rag_se_incluyen_en_prompt(self):
         ods_docs = [RagDocument(content="ODS 16: Paz, justicia e instituciones")]
         mock_llm = make_llm()
         node = make_general_node(mock_llm, make_rag(ods=ods_docs))
         await node(make_state())
-        system_prompt = mock_llm.generate.call_args[0][0]
+        system_prompt = mock_llm.generate_with_history.call_args[0][0]
         assert "ODS 16: Paz, justicia e instituciones" in system_prompt
 
     async def test_rag_context_guardado_en_estado(self):

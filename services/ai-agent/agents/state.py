@@ -23,3 +23,4 @@ class AgentState(TypedDict):
     pdf_filename: NotRequired[str | None]       # nombre del archivo PDF
     doc_confirmed: NotRequired[bool]            # usuario confirmó generación del documento
     lt_summary: NotRequired[str | None]         # resumen de la sesión anterior (memoria LT)
+    skip_tone: NotRequired[bool]                # respuesta plantilla: no pasar por tone_review

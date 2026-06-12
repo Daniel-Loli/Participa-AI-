@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import re
+
+from langchain_core.messages import HumanMessage
+
 from agents.state import AgentState
 from src.domain.ports.i_llm_client import ILlmClient
 from src.domain.value_objects.agent_intent import AgentIntent
@@ -26,9 +30,12 @@ _VALID_INTENTS = {i.value for i in AgentIntent}
 _DOC_TERMS  = {"carta", "redactar", "solicitud", "documento", "escrib", "generar", "genera"}
 _LEGAL_TERMS = {"ley", "leyes", "legal", "derecho", "derechos", "artículo", "norma", "normativa"}
 
-# Respuestas afirmativas para confirmar generación de documento
+# Respuestas afirmativas para confirmar generación de documento (comparación por palabra completa)
 _AFIRMATIVO = {"si", "sí", "dale", "ok", "okay", "claro", "yes", "hazlo",
                "bueno", "adelante", "genérala", "generala", "1"}
+
+# Respuestas negativas a la confirmación de documento
+_NEGATIVO = {"no", "2", "nop", "todavía", "todavia", "aún", "aun", "espera", "cancelar", "cancela"}
 
 # Menú principal — 5 opciones consistentes en todo el flujo
 MAIN_MENU_MAP = {
@@ -48,17 +55,29 @@ _MAIN_MENU_TEXT = {
     "5": "Quiero conectar con organizaciones juveniles en mi zona",
 }
 
-# Menú post-documento (3 opciones)
+# Menú post-documento (3 opciones) — también se traduce a texto real
+# La opción 3 ("consultar otro tema") vuelve al menú principal
 _POST_DOC_MAP = {
     "1": AgentIntent.ESTRATEGA.value,
     "2": AgentIntent.RED.value,
-    "3": AgentIntent.GENERAL.value,
+    "3": AgentIntent.MENU.value,
 }
 
-# Saludos cortos → mostrar menú
+_POST_DOC_TEXT = {
+    "1": "¿Cómo presento mi documento en la mesa de partes de la municipalidad?",
+    "2": "Quiero ver organizaciones juveniles de apoyo en mi distrito",
+    "3": "Quiero consultar otro tema de participación ciudadana",
+}
+
+# Saludos cortos → mostrar menú (comparación por palabra completa, no substring)
 _SALUDOS = {"hola", "buenas", "buenos", "hey", "hi", "ola", "saludos"}
 _MENU_TRIGGERS = {"ayudarme", "ayudarte", "qué puedes", "que puedes",
                   "opciones", "menú", "menu", "en qué más", "en que mas"}
+
+
+def _tokens(message: str) -> set[str]:
+    """Extrae palabras normalizadas del mensaje (sin signos de puntuación)."""
+    return set(re.findall(r"[a-záéíóúüñ0-9]+", message.lower()))
 
 
 def _is_compound_legal_doc(message: str) -> bool:
@@ -67,13 +86,34 @@ def _is_compound_legal_doc(message: str) -> bool:
 
 
 def _is_saludo(message: str) -> bool:
-    msg = message.lower().strip()
-    return len(msg.split()) <= 4 and any(s in msg for s in _SALUDOS)
+    words = _tokens(message)
+    return len(message.split()) <= 4 and bool(words & _SALUDOS)
 
 
 def _wants_menu(message: str) -> bool:
     msg = message.lower()
     return any(t in msg for t in _MENU_TRIGGERS)
+
+
+def _is_afirmativo(message: str) -> bool:
+    return bool(_tokens(message) & _AFIRMATIVO)
+
+
+def _is_negativo(message: str) -> bool:
+    return bool(_tokens(message) & _NEGATIVO)
+
+
+def _rewrite_last_human_message(state: AgentState, new_text: str) -> list:
+    """Reemplaza el contenido del último HumanMessage del historial.
+
+    Cuando el usuario escribe un número de menú ("1"), el historial guarda "1";
+    al traducirlo a texto real también actualizamos el historial para que los
+    nodos y el LLM vean la intención real y no un número suelto.
+    """
+    history = state.get("conversation_history") or []
+    if history and isinstance(history[-1], HumanMessage) and history[-1].id:
+        return [HumanMessage(content=new_text, id=history[-1].id)]
+    return []
 
 
 def make_classify_intent_node(llm_client: ILlmClient):
@@ -84,30 +124,55 @@ def make_classify_intent_node(llm_client: ILlmClient):
         if not profile.get("name") or not profile.get("district"):
             return {"intent": AgentIntent.ONBOARDING.value}
 
+        # 1b. Onboarding aún activo (falta la problemática): el siguiente mensaje
+        # responde al menú de problemáticas — sin esto, "3" lo capturaría el menú principal
+        if not profile.get("issue") and profile.get("conversation_stage") != "ACTIVE":
+            return {"intent": AgentIntent.ONBOARDING.value}
+
         msg = state["user_message"].strip()
 
         # 2. Menú post-documento (awaiting_next_action)
         if profile.get("awaiting_next_action"):
+            updated_profile = {**profile, "awaiting_next_action": False}
             if msg in _POST_DOC_MAP:
-                updated_profile = {**profile, "awaiting_next_action": False}
-                return {"intent": _POST_DOC_MAP[msg], "user_profile": updated_profile}
+                translated = _POST_DOC_TEXT[msg]
+                return {
+                    "intent": _POST_DOC_MAP[msg],
+                    "user_message": translated,
+                    "user_profile": updated_profile,
+                    "conversation_history": _rewrite_last_human_message(state, translated),
+                }
+            # Escribió otra cosa: limpiar el flag y seguir con la clasificación normal
+            profile = updated_profile
 
         # 3. Confirmación de generación de documento
         if profile.get("awaiting_doc_confirmation"):
-            if any(p in msg.lower() for p in _AFIRMATIVO):
-                return {"intent": AgentIntent.REDACTOR.value, "doc_confirmed": True}
+            if _is_afirmativo(msg):
+                return {
+                    "intent": AgentIntent.REDACTOR.value,
+                    "doc_confirmed": True,
+                    "user_profile": profile,
+                }
+            # Negativa explícita o cualquier otro mensaje: limpiar el flag.
+            # Una negativa pura ("no", "2") vuelve al menú; otro texto se clasifica normal.
+            profile = {**profile, "awaiting_doc_confirmation": False, "pending_doc_type": None}
+            if _is_negativo(msg) and len(msg.split()) <= 6:
+                return {"intent": AgentIntent.MENU.value, "user_profile": profile}
 
         # 4. Selección numerada del menú principal (1-5)
         # Se traduce el número a texto para que el nodo destino entienda la intención real
         if msg in MAIN_MENU_MAP:
+            translated = _MAIN_MENU_TEXT[msg]
             return {
                 "intent": MAIN_MENU_MAP[msg],
-                "user_message": _MAIN_MENU_TEXT[msg],
+                "user_message": translated,
+                "user_profile": profile,
+                "conversation_history": _rewrite_last_human_message(state, translated),
             }
 
         # 5. Saludo corto o solicitud de menú → mostrar menú principal
         if _is_saludo(msg) or _wants_menu(msg):
-            return {"intent": AgentIntent.MENU.value}
+            return {"intent": AgentIntent.MENU.value, "user_profile": profile}
 
         # 6. Clasificación por LLM — con contexto de los últimos 4 mensajes
         history_tail = state.get("conversation_history", [])[-4:]
@@ -121,8 +186,8 @@ def make_classify_intent_node(llm_client: ILlmClient):
 
         # 7. Intención compuesta legal + redactor
         if intent == AgentIntent.LEGAL.value and _is_compound_legal_doc(state["user_message"]):
-            return {"intent": AgentIntent.LEGAL_REDACTOR.value}
+            return {"intent": AgentIntent.LEGAL_REDACTOR.value, "user_profile": profile}
 
-        return {"intent": intent}
+        return {"intent": intent, "user_profile": profile}
 
     return classify_intent

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from agents.history import trim_history
+from agents.redactor_node import _detect_doc_type
 from agents.state import AgentState
 from agents.wa_format import WA_RULES
 from src.domain.ports.i_llm_client import ILlmClient
@@ -32,15 +33,17 @@ def make_legal_redactor_node(llm_client: ILlmClient, rag_client: IRagClient):
         docs = await rag_client.search(state["user_message"], RagCollection.LEGAL, top_k=5)
 
         if not docs:
-            return {"response": _NO_CONTEXT_RESPONSE, "rag_context": []}
+            return {"response": _NO_CONTEXT_RESPONSE, "rag_context": [], "skip_tone": True}
 
         context = "\n\n".join(doc.content for doc in docs)
         system_prompt = _PROMPT.format(context=context, wa_rules=WA_RULES)
         response = await llm_client.generate_with_history(system_prompt, trim_history(state["conversation_history"]))
 
         # Marca el perfil para que el siguiente turno sepa que espera confirmación
+        # y conserva el tipo de documento detectado en el mensaje original
         profile = dict(state.get("user_profile") or {})
         profile["awaiting_doc_confirmation"] = True
+        profile["pending_doc_type"] = _detect_doc_type(state["user_message"])
 
         return {
             "response": response,

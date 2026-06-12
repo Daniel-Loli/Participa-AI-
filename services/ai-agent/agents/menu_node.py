@@ -26,6 +26,7 @@ def make_menu_node():
 
         return {
             "response": response,
+            "skip_tone": True,
         }
 
     return menu

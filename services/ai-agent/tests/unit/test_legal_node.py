@@ -22,6 +22,7 @@ def make_state(**kwargs):
 def make_llm(response: str = "Respuesta legal") -> MagicMock:
     mock = MagicMock()
     mock.generate = AsyncMock(return_value=response)
+    mock.generate_with_history = AsyncMock(return_value=response)
     return mock
 
 
@@ -42,22 +43,25 @@ class TestLegalNode:
         node = make_legal_node(mock_llm, mock_rag)
         result = await node(make_state())
 
-        system_prompt = mock_llm.generate.call_args[0][0]
+        system_prompt = mock_llm.generate_with_history.call_args[0][0]
         assert "Art. 1 Ley 28056" in system_prompt
         assert "Art. 2 Ley 28056" in system_prompt
 
-    async def test_rag_retorna_vacio_llm_igual_recibe_mensaje(self):
-        mock_llm = make_llm("No tengo información específica.")
+    async def test_rag_vacio_responde_sin_inventar_y_sin_llm(self):
+        # Sin contexto legal, el nodo NO llama al LLM (evita alucinaciones)
+        mock_llm = make_llm()
         mock_rag = make_rag([])
         node = make_legal_node(mock_llm, mock_rag)
         result = await node(make_state())
 
-        mock_llm.generate.assert_called_once()
-        assert result["response"] == "No tengo información específica."
+        mock_llm.generate_with_history.assert_not_called()
+        assert "No encontré información" in result["response"]
+        assert result["rag_context"] == []
 
     async def test_respuesta_llm_se_guarda_en_response(self):
+        docs = [RagDocument(content="Art. 1: derecho de participación")]
         mock_llm = make_llm("Respuesta legal detallada")
-        mock_rag = make_rag([])
+        mock_rag = make_rag(docs)
         node = make_legal_node(mock_llm, mock_rag)
         result = await node(make_state())
         assert result["response"] == "Respuesta legal detallada"
@@ -70,11 +74,12 @@ class TestLegalNode:
         result = await node(make_state())
         assert result["rag_context"] == ["chunk 1", "chunk 2"]
 
-    async def test_rag_vacio_no_incluye_contexto_en_prompt(self):
+    async def test_prompt_contiene_regla_de_solo_fuentes_propias(self):
+        docs = [RagDocument(content="Art. 5: presupuesto participativo")]
         mock_llm = make_llm()
-        mock_rag = make_rag([])
+        mock_rag = make_rag(docs)
         node = make_legal_node(mock_llm, mock_rag)
         await node(make_state())
 
-        system_prompt = mock_llm.generate.call_args[0][0]
-        assert "Contexto legal:" not in system_prompt
+        system_prompt = mock_llm.generate_with_history.call_args[0][0]
+        assert "NO inventes artículos" in system_prompt
